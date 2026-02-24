@@ -8,6 +8,7 @@ import React, {
 } from 'react';
 import { Study, Category, UserProfile, Reminder, Reward } from '@/constants/Types';
 import * as Storage from '@/utils/storage';
+import { ExportData } from '@/utils/storage';
 import {
   scheduleReminders,
   sendRewardNotification,
@@ -36,6 +37,9 @@ interface AppContextType {
   addReminder: (reminder: Omit<Reminder, 'id'>) => Promise<void>;
   updateReminder: (reminder: Reminder) => Promise<void>;
   deleteReminder: (id: string) => Promise<void>;
+
+  exportData: () => Promise<void>;
+  importData: () => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -228,6 +232,25 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [reminders, studies, profile, refreshReminders]
   );
 
+  const exportDataFn = useCallback(async () => {
+    await Storage.exportData();
+  }, []);
+
+  const importDataFn = useCallback(async () => {
+    const imported: ExportData = await Storage.importData();
+    setStudies(imported.studies ?? []);
+    setCategories(imported.categories ?? []);
+    setProfile(imported.profile ?? { name: 'Adventurer' });
+    setReminders(imported.reminders ?? []);
+    setRewards(imported.rewards ?? []);
+    const incompleteCount = (imported.studies ?? []).filter((s) => !s.completed).length;
+    await scheduleReminders(
+      imported.reminders ?? [],
+      incompleteCount,
+      (imported.profile ?? { name: 'Adventurer' }).name
+    );
+  }, []);
+
   return (
     <AppContext.Provider
       value={{
@@ -248,6 +271,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         addReminder,
         updateReminder,
         deleteReminder,
+        exportData: exportDataFn,
+        importData: importDataFn,
       }}
     >
       {children}

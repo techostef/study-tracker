@@ -7,6 +7,7 @@ import {
   TextInput,
   Pressable,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -14,14 +15,54 @@ import { useApp } from '@/contexts/AppContext';
 import { Colors } from '@/constants/Colors';
 
 export default function ProfileScreen() {
-  const { profile, updateProfile, studies, rewards } = useApp();
+  const { profile, updateProfile, studies, rewards, exportData, importData } = useApp();
   const router = useRouter();
   const [name, setName] = useState(profile.name);
   const [editing, setEditing] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [importing, setImporting] = useState(false);
 
   const completedCount = studies.filter((s) => s.completed).length;
   const activeCount = studies.filter((s) => !s.completed).length;
   const totalProgress = studies.reduce((sum, s) => sum + s.progress, 0);
+
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      await exportData();
+    } catch (e: any) {
+      Alert.alert('Export Failed', e?.message ?? 'Could not export data.');
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleImport = async () => {
+    Alert.alert(
+      'Import Data',
+      'This will replace ALL your current data with the backup file. Are you sure?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Import',
+          style: 'destructive',
+          onPress: async () => {
+            setImporting(true);
+            try {
+              await importData();
+              Alert.alert('Success', 'Data imported successfully!');
+            } catch (e: any) {
+              if (e?.message !== 'CANCELLED') {
+                Alert.alert('Import Failed', e?.message ?? 'Could not import data.');
+              }
+            } finally {
+              setImporting(false);
+            }
+          },
+        },
+      ]
+    );
+  };
 
   const handleSave = async () => {
     if (!name.trim()) {
@@ -95,12 +136,42 @@ export default function ProfileScreen() {
 
       <Pressable
         style={styles.menuItem}
-        onPress={() => router.push('/reminder/')}
+        onPress={() => router.push('/reminder'  as any)}
       >
         <Ionicons name="notifications" size={22} color={Colors.primary} />
         <Text style={styles.menuLabel}>Manage Reminders</Text>
         <Ionicons name="chevron-forward" size={20} color={Colors.textLight} />
       </Pressable>
+
+      <Text style={styles.sectionTitle}>Data Management</Text>
+
+      <View style={styles.dataRow}>
+        <Pressable
+          style={[styles.dataBtn, styles.exportBtn]}
+          onPress={handleExport}
+          disabled={exporting}
+        >
+          {exporting ? (
+            <ActivityIndicator size="small" color={Colors.white} />
+          ) : (
+            <Ionicons name="share-outline" size={20} color={Colors.white} />
+          )}
+          <Text style={styles.dataBtnText}>Export Backup</Text>
+        </Pressable>
+
+        <Pressable
+          style={[styles.dataBtn, styles.importBtn]}
+          onPress={handleImport}
+          disabled={importing}
+        >
+          {importing ? (
+            <ActivityIndicator size="small" color={Colors.white} />
+          ) : (
+            <Ionicons name="download-outline" size={20} color={Colors.white} />
+          )}
+          <Text style={styles.dataBtnText}>Import Backup</Text>
+        </Pressable>
+      </View>
 
       <Text style={styles.sectionTitle}>
         Rewards ({rewards.length})
@@ -313,5 +384,35 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
     color: Colors.secondary,
+  },
+  dataRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 20,
+  },
+  dataBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    borderRadius: 14,
+    padding: 14,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  exportBtn: {
+    backgroundColor: Colors.primary,
+  },
+  importBtn: {
+    backgroundColor: Colors.secondary,
+  },
+  dataBtnText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: Colors.white,
   },
 });

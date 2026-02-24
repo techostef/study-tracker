@@ -26,7 +26,14 @@
         "foregroundImage": "./assets/images/icon.png",
         "monochromeImage": "./assets/images/icon.png"
       },
-      "package": "com.techoky.adventurestudy"
+      "package": "com.techoky.adventurestudy",
+      "permissions": [
+        "android.permission.SCHEDULE_EXACT_ALARM",
+        "android.permission.USE_EXACT_ALARM",
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.VIBRATE",
+        "android.permission.WAKE_LOCK"
+      ]
     },
     "web": {
       "output": "static",
@@ -58,9 +65,13 @@
         "expo-notifications",
         {
           "icon": "./assets/images/icon.png",
-          "color": "#4F46E5"
+          "color": "#4F46E5",
+          "defaultChannel": "study-reminders-alarm",
+          "androidMode": "default",
+          "iosDisplayInForeground": true
         }
-      ]
+      ],
+      "expo-document-picker"
     ],
     "experiments": {
       "typedRoutes": true,
