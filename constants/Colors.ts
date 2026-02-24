@@ -1,0 +1,30 @@
+export const Colors = {
+  primary: '#4F46E5',
+  primaryLight: '#818CF8',
+  primaryDark: '#3730A3',
+  secondary: '#10B981',
+  secondaryLight: '#6EE7B7',
+  accent: '#F59E0B',
+  accentLight: '#FCD34D',
+  background: '#F1F5F9',
+  card: '#FFFFFF',
+  text: '#1E293B',
+  textSecondary: '#64748B',
+  textLight: '#94A3B8',
+  border: '#E2E8F0',
+  danger: '#EF4444',
+  dangerLight: '#FEE2E2',
+  success: '#10B981',
+  successLight: '#D1FAE5',
+  warning: '#F59E0B',
+  warningLight: '#FEF3C7',
+  white: '#FFFFFF',
+  black: '#000000',
+  overlay: 'rgba(0,0,0,0.5)',
+};
+
+export const CategoryColors = [
+  '#4F46E5', '#7C3AED', '#EC4899', '#EF4444',
+  '#F59E0B', '#10B981', '#06B6D4', '#3B82F6',
+  '#8B5CF6', '#F97316', '#14B8A6', '#6366F1',
+];

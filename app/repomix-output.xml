@@ -1,0 +1,2718 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+_layout.tsx
+(tabs)/_layout.tsx
+(tabs)/categories.tsx
+(tabs)/index.tsx
+(tabs)/leaderboard.tsx
+(tabs)/profile.tsx
+(tabs)/studies.tsx
+category/[id].tsx
+category/create.tsx
+reminder/index.tsx
+study/[id].tsx
+study/create.tsx
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="_layout.tsx">
+import { Stack } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
+import { AppProvider } from '@/contexts/AppContext';
+import { Colors } from '@/constants/Colors';
+
+export default function RootLayout() {
+  return (
+    <AppProvider>
+      <StatusBar style="dark" />
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          contentStyle: { backgroundColor: Colors.background },
+        }}
+      >
+        {/* <Stack.Screen name="(tabs)" /> */}
+        {/* <Stack.Screen
+          name="study/create"
+          options={{
+            presentation: 'modal',
+            headerShown: true,
+            title: 'New Study',
+            headerStyle: { backgroundColor: Colors.white },
+            headerTintColor: Colors.text,
+          }}
+        /> */}
+        {/* <Stack.Screen
+          name="study/[id]"
+          options={{
+            presentation: 'modal',
+            headerShown: true,
+            title: 'Edit Study',
+            headerStyle: { backgroundColor: Colors.white },
+            headerTintColor: Colors.text,
+          }}
+        /> */}
+        {/* <Stack.Screen
+          name="category/create"
+          options={{
+            presentation: 'modal',
+            headerShown: true,
+            title: 'New Category',
+            headerStyle: { backgroundColor: Colors.white },
+            headerTintColor: Colors.text,
+          }}
+        /> */}
+        {/* <Stack.Screen
+          name="category/[id]"
+          options={{
+            presentation: 'modal',
+            headerShown: true,
+            title: 'Edit Category',
+            headerStyle: { backgroundColor: Colors.white },
+            headerTintColor: Colors.text,
+          }}
+        /> */}
+        <Stack.Screen
+          name="reminder/index"
+          options={{
+            presentation: 'modal',
+            headerShown: true,
+            title: 'Reminders',
+            headerStyle: { backgroundColor: Colors.white },
+            headerTintColor: Colors.text,
+          }}
+        />
+      </Stack>
+    </AppProvider>
+  );
+}
+</file>
+
+<file path="(tabs)/_layout.tsx">
+import { Tabs } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { Colors } from '@/constants/Colors';
+
+export default function TabLayout() {
+  return (
+    <Tabs
+      screenOptions={{
+        tabBarActiveTintColor: Colors.primary,
+        tabBarInactiveTintColor: Colors.textLight,
+        tabBarStyle: {
+          backgroundColor: Colors.white,
+          borderTopColor: Colors.border,
+          paddingBottom: 5,
+          paddingTop: 5,
+          height: 60,
+        },
+        headerStyle: {
+          backgroundColor: Colors.white,
+        },
+        headerTintColor: Colors.text,
+        headerTitleStyle: {
+          fontWeight: '700',
+          fontSize: 20,
+        },
+      }}
+    >
+      <Tabs.Screen
+        name="index"
+        options={{
+          title: 'Tracker',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="checkmark-done-circle" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="studies"
+        options={{
+          title: 'Studies',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="book" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="categories"
+        options={{
+          title: 'Categories',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="folder" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="leaderboard"
+        options={{
+          title: 'Ranking',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="trophy" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: 'Profile',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="person" size={size} color={color} />
+          ),
+        }}
+      />
+    </Tabs>
+  );
+}
+</file>
+
+<file path="(tabs)/categories.tsx">
+import React from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  Pressable,
+  Alert,
+  ActivityIndicator,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { useApp } from '@/contexts/AppContext';
+import { Colors } from '@/constants/Colors';
+
+export default function CategoriesScreen() {
+  const { categories, studies, deleteCategory, isLoading } = useApp();
+  const router = useRouter();
+
+  const getStudyCount = (categoryId: string) =>
+    studies.filter((s) => s.categoryId === categoryId).length;
+
+  const handleDelete = (id: string, name: string) => {
+    const count = getStudyCount(id);
+    const warning = count > 0
+      ? `\n\n⚠️ ${count} ${count === 1 ? 'study uses' : 'studies use'} this category.`
+      : '';
+
+    Alert.alert(
+      'Delete Category',
+      `Are you sure you want to delete "${name}"?${warning}`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => deleteCategory(id),
+        },
+      ]
+    );
+  };
+
+  if (isLoading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.container}>
+      <FlatList
+        data={categories}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.list}
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <Ionicons name="folder-outline" size={64} color={Colors.textLight} />
+            <Text style={styles.emptyTitle}>No Categories Yet</Text>
+            <Text style={styles.emptySubtitle}>
+              Create categories to organize your studies
+            </Text>
+          </View>
+        }
+        renderItem={({ item }) => {
+          const count = getStudyCount(item.id);
+          return (
+            <Pressable
+              style={styles.card}
+              onPress={() => router.push(`/category/${item.id}`)}
+            >
+              <View style={styles.cardContent}>
+                <View
+                  style={[styles.colorDot, { backgroundColor: item.color }]}
+                />
+                <View style={styles.cardInfo}>
+                  <Text style={styles.cardTitle}>{item.name}</Text>
+                  <Text style={styles.cardSubtitle}>
+                    {count} {count === 1 ? 'study' : 'studies'}
+                  </Text>
+                </View>
+                <Pressable
+                  onPress={() => handleDelete(item.id, item.name)}
+                  hitSlop={8}
+                >
+                  <Ionicons
+                    name="trash-outline"
+                    size={20}
+                    color={Colors.danger}
+                  />
+                </Pressable>
+              </View>
+            </Pressable>
+          );
+        }}
+      />
+
+      <Pressable
+        style={styles.fab}
+        onPress={() => router.push('/category/create')}
+      >
+        <Ionicons name="add" size={28} color={Colors.white} />
+      </Pressable>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  list: {
+    padding: 16,
+    paddingBottom: 80,
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    paddingTop: 80,
+    gap: 8,
+  },
+  emptyTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: Colors.textSecondary,
+  },
+  emptySubtitle: {
+    fontSize: 14,
+    color: Colors.textLight,
+  },
+  card: {
+    backgroundColor: Colors.white,
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  cardContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  colorDot: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+  },
+  cardInfo: {
+    flex: 1,
+  },
+  cardTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: Colors.text,
+  },
+  cardSubtitle: {
+    fontSize: 13,
+    color: Colors.textSecondary,
+    marginTop: 2,
+  },
+  fab: {
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: Colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+});
+</file>
+
+<file path="(tabs)/index.tsx">
+import React, { useState, useMemo } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  Pressable,
+  ActivityIndicator,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useApp } from '@/contexts/AppContext';
+import { Colors } from '@/constants/Colors';
+import { motivationalQuotes } from '@/utils/fakeData';
+import ProgressRing from '@/components/ProgressRing';
+import RewardModal from '@/components/RewardModal';
+
+export default function TrackerScreen() {
+  const { studies, categories, profile, incrementProgress, isLoading } = useApp();
+  const [rewardVisible, setRewardVisible] = useState(false);
+  const [rewardStudyTitle, setRewardStudyTitle] = useState('');
+
+  const activeStudies = useMemo(
+    () => studies.filter((s) => !s.completed),
+    [studies]
+  );
+  const completedStudies = useMemo(
+    () => studies.filter((s) => s.completed),
+    [studies]
+  );
+
+  const totalProgress = useMemo(() => {
+    const totalTarget = studies.reduce((sum, s) => sum + s.target, 0);
+    const totalDone = studies.reduce((sum, s) => sum + s.progress, 0);
+    return { totalTarget, totalDone };
+  }, [studies]);
+
+  const quote = useMemo(
+    () => motivationalQuotes[Math.floor(Math.random() * motivationalQuotes.length)],
+    []
+  );
+
+  const getCategoryName = (categoryId: string) => {
+    const cat = categories.find((c) => c.id === categoryId);
+    return cat?.name ?? 'Uncategorized';
+  };
+
+  const getCategoryColor = (categoryId: string) => {
+    const cat = categories.find((c) => c.id === categoryId);
+    return cat?.color ?? Colors.textLight;
+  };
+
+  const handleTap = async (studyId: string) => {
+    const justCompleted = await incrementProgress(studyId);
+    if (justCompleted) {
+      const study = studies.find((s) => s.id === studyId);
+      setRewardStudyTitle(study?.title ?? 'Study');
+      setRewardVisible(true);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+      </View>
+    );
+  }
+
+  return (
+    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <View style={styles.quoteCard}>
+        <Ionicons name="sparkles" size={20} color={Colors.accent} />
+        <Text style={styles.quoteText}>"{quote}"</Text>
+      </View>
+
+      <View style={styles.overviewCard}>
+        <ProgressRing
+          progress={totalProgress.totalDone}
+          target={totalProgress.totalTarget || 1}
+          size={140}
+          strokeWidth={12}
+          color={Colors.primary}
+        />
+        <View style={styles.overviewStats}>
+          <View style={styles.statRow}>
+            <Ionicons name="book" size={18} color={Colors.primary} />
+            <Text style={styles.statText}>
+              {studies.length} Total Studies
+            </Text>
+          </View>
+          <View style={styles.statRow}>
+            <Ionicons name="hourglass" size={18} color={Colors.accent} />
+            <Text style={styles.statText}>
+              {activeStudies.length} In Progress
+            </Text>
+          </View>
+          <View style={styles.statRow}>
+            <Ionicons name="checkmark-circle" size={18} color={Colors.success} />
+            <Text style={styles.statText}>
+              {completedStudies.length} Completed
+            </Text>
+          </View>
+        </View>
+      </View>
+
+      <Text style={styles.sectionTitle}>
+        Active Studies ({activeStudies.length})
+      </Text>
+
+      {activeStudies.length === 0 ? (
+        <View style={styles.emptyCard}>
+          <Ionicons name="book-outline" size={48} color={Colors.textLight} />
+          <Text style={styles.emptyText}>No active studies yet</Text>
+          <Text style={styles.emptySubtext}>
+            Go to Studies tab to create one!
+          </Text>
+        </View>
+      ) : (
+        activeStudies.map((study) => {
+          const percentage = Math.round((study.progress / study.target) * 100);
+          return (
+            <Pressable
+              key={study.id}
+              style={styles.studyCard}
+              onPress={() => handleTap(study.id)}
+            >
+              <View style={styles.studyHeader}>
+                <View style={styles.studyTitleRow}>
+                  <Text style={styles.studyTitle} numberOfLines={1}>
+                    {study.title}
+                  </Text>
+                  <View
+                    style={[
+                      styles.categoryBadge,
+                      { backgroundColor: getCategoryColor(study.categoryId) + '20' },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.categoryBadgeText,
+                        { color: getCategoryColor(study.categoryId) },
+                      ]}
+                    >
+                      {getCategoryName(study.categoryId)}
+                    </Text>
+                  </View>
+                </View>
+                {study.description ? (
+                  <Text style={styles.studyDesc} numberOfLines={1}>
+                    {study.description}
+                  </Text>
+                ) : null}
+              </View>
+
+              <View style={styles.progressSection}>
+                <View style={styles.progressBarBg}>
+                  <View
+                    style={[
+                      styles.progressBarFill,
+                      {
+                        width: `${percentage}%`,
+                        backgroundColor: getCategoryColor(study.categoryId),
+                      },
+                    ]}
+                  />
+                </View>
+                <View style={styles.progressInfo}>
+                  <Text style={styles.progressText}>
+                    {study.progress} / {study.target}
+                  </Text>
+                  <Text style={styles.percentText}>{percentage}%</Text>
+                </View>
+              </View>
+
+              <View style={styles.tapHint}>
+                <Ionicons
+                  name="add-circle"
+                  size={28}
+                  color={Colors.primary}
+                />
+                <Text style={styles.tapHintText}>Tap to log progress</Text>
+              </View>
+            </Pressable>
+          );
+        })
+      )}
+
+      {completedStudies.length > 0 && (
+        <>
+          <Text style={styles.sectionTitle}>
+            Completed ({completedStudies.length})
+          </Text>
+          {completedStudies.map((study) => (
+            <View key={study.id} style={[styles.studyCard, styles.completedCard]}>
+              <View style={styles.completedHeader}>
+                <Ionicons name="trophy" size={24} color={Colors.accent} />
+                <Text style={styles.completedTitle}>{study.title}</Text>
+              </View>
+              <Text style={styles.completedInfo}>
+                {study.target}/{study.target} completed
+              </Text>
+            </View>
+          ))}
+        </>
+      )}
+
+      <View style={{ height: 30 }} />
+
+      <RewardModal
+        visible={rewardVisible}
+        studyTitle={rewardStudyTitle}
+        userName={profile.name}
+        onClose={() => setRewardVisible(false)}
+      />
+    </ScrollView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
+  content: {
+    padding: 16,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: Colors.background,
+  },
+  quoteCard: {
+    backgroundColor: Colors.warningLight,
+    borderRadius: 14,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+    marginBottom: 16,
+  },
+  quoteText: {
+    flex: 1,
+    fontSize: 14,
+    fontStyle: 'italic',
+    color: Colors.text,
+    lineHeight: 20,
+  },
+  overviewCard: {
+    backgroundColor: Colors.white,
+    borderRadius: 20,
+    padding: 24,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 20,
+    marginBottom: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  overviewStats: {
+    flex: 1,
+    gap: 12,
+  },
+  statRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  statText: {
+    fontSize: 14,
+    color: Colors.text,
+    fontWeight: '500',
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: Colors.text,
+    marginBottom: 12,
+  },
+  emptyCard: {
+    backgroundColor: Colors.white,
+    borderRadius: 16,
+    padding: 40,
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 16,
+  },
+  emptyText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: Colors.textSecondary,
+  },
+  emptySubtext: {
+    fontSize: 13,
+    color: Colors.textLight,
+  },
+  studyCard: {
+    backgroundColor: Colors.white,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  studyHeader: {
+    marginBottom: 12,
+  },
+  studyTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  studyTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: Colors.text,
+    flex: 1,
+  },
+  categoryBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  categoryBadgeText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  studyDesc: {
+    fontSize: 13,
+    color: Colors.textSecondary,
+    marginTop: 4,
+  },
+  progressSection: {
+    gap: 6,
+  },
+  progressBarBg: {
+    height: 8,
+    backgroundColor: Colors.border,
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  progressBarFill: {
+    height: '100%',
+    borderRadius: 4,
+  },
+  progressInfo: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  progressText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: Colors.textSecondary,
+  },
+  percentText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: Colors.primary,
+  },
+  tapHint: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: Colors.border,
+  },
+  tapHintText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: Colors.primary,
+  },
+  completedCard: {
+    opacity: 0.7,
+  },
+  completedHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  completedTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: Colors.text,
+    textDecorationLine: 'line-through',
+  },
+  completedInfo: {
+    fontSize: 13,
+    color: Colors.success,
+    fontWeight: '500',
+    marginTop: 4,
+    marginLeft: 32,
+  },
+});
+</file>
+
+<file path="(tabs)/leaderboard.tsx">
+import React, { useMemo } from 'react';
+import { View, Text, StyleSheet, FlatList } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useApp } from '@/contexts/AppContext';
+import { Colors } from '@/constants/Colors';
+import { fakeLeaderboard, LeaderboardEntry } from '@/utils/fakeData';
+
+export default function LeaderboardScreen() {
+  const { rewards, profile } = useApp();
+
+  const leaderboard = useMemo(() => {
+    const userEntry: LeaderboardEntry = {
+      rank: 0,
+      name: `${profile.name} (You)`,
+      studiesCompleted: rewards.length,
+      avatar: '🧑‍🎓',
+      country: '🏠',
+    };
+
+    const combined = [...fakeLeaderboard, userEntry];
+    combined.sort((a, b) => b.studiesCompleted - a.studiesCompleted);
+    combined.forEach((entry, index) => {
+      entry.rank = index + 1;
+    });
+
+    return combined;
+  }, [rewards.length, profile.name]);
+
+  const getMedalEmoji = (rank: number) => {
+    if (rank === 1) return '🥇';
+    if (rank === 2) return '🥈';
+    if (rank === 3) return '🥉';
+    return null;
+  };
+
+  const renderItem = ({ item }: { item: LeaderboardEntry }) => {
+    const isUser = item.name.includes('(You)');
+    const medal = getMedalEmoji(item.rank);
+
+    return (
+      <View style={[styles.row, isUser && styles.userRow]}>
+        <View style={styles.rankCol}>
+          {medal ? (
+            <Text style={styles.medal}>{medal}</Text>
+          ) : (
+            <Text style={styles.rankText}>{item.rank}</Text>
+          )}
+        </View>
+        <Text style={styles.avatar}>{item.avatar}</Text>
+        <View style={styles.infoCol}>
+          <Text style={[styles.name, isUser && styles.userName]} numberOfLines={1}>
+            {item.name}
+          </Text>
+          <Text style={styles.country}>{item.country}</Text>
+        </View>
+        <View style={styles.scoreCol}>
+          <Text style={[styles.score, isUser && styles.userScore]}>
+            {item.studiesCompleted}
+          </Text>
+          <Text style={styles.scoreLabel}>done</Text>
+        </View>
+      </View>
+    );
+  };
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Ionicons name="trophy" size={28} color={Colors.accent} />
+        <Text style={styles.headerTitle}>Global Ranking</Text>
+        <Text style={styles.headerSubtitle}>
+          See how you compare with other learners worldwide
+        </Text>
+      </View>
+
+      <FlatList
+        data={leaderboard}
+        keyExtractor={(item) => `${item.rank}-${item.name}`}
+        renderItem={renderItem}
+        contentContainerStyle={styles.list}
+        showsVerticalScrollIndicator={false}
+      />
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
+  header: {
+    backgroundColor: Colors.white,
+    padding: 20,
+    alignItems: 'center',
+    gap: 4,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+  },
+  headerTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: Colors.text,
+    marginTop: 4,
+  },
+  headerSubtitle: {
+    fontSize: 13,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+  },
+  list: {
+    padding: 16,
+    paddingBottom: 30,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.white,
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 8,
+    gap: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 3,
+    elevation: 1,
+  },
+  userRow: {
+    backgroundColor: '#EEF2FF',
+    borderWidth: 2,
+    borderColor: Colors.primary,
+  },
+  rankCol: {
+    width: 36,
+    alignItems: 'center',
+  },
+  rankText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: Colors.textSecondary,
+  },
+  medal: {
+    fontSize: 24,
+  },
+  avatar: {
+    fontSize: 28,
+  },
+  infoCol: {
+    flex: 1,
+  },
+  name: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: Colors.text,
+  },
+  userName: {
+    color: Colors.primary,
+    fontWeight: '800',
+  },
+  country: {
+    fontSize: 16,
+    marginTop: 2,
+  },
+  scoreCol: {
+    alignItems: 'center',
+  },
+  score: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: Colors.text,
+  },
+  userScore: {
+    color: Colors.primary,
+  },
+  scoreLabel: {
+    fontSize: 11,
+    color: Colors.textLight,
+  },
+});
+</file>
+
+<file path="(tabs)/profile.tsx">
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TextInput,
+  Pressable,
+  Alert,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { useApp } from '@/contexts/AppContext';
+import { Colors } from '@/constants/Colors';
+
+export default function ProfileScreen() {
+  const { profile, updateProfile, studies, rewards } = useApp();
+  const router = useRouter();
+  const [name, setName] = useState(profile.name);
+  const [editing, setEditing] = useState(false);
+
+  const completedCount = studies.filter((s) => s.completed).length;
+  const activeCount = studies.filter((s) => !s.completed).length;
+  const totalProgress = studies.reduce((sum, s) => sum + s.progress, 0);
+
+  const handleSave = async () => {
+    if (!name.trim()) {
+      Alert.alert('Error', 'Please enter your name');
+      return;
+    }
+    await updateProfile({ name: name.trim() });
+    setEditing(false);
+    Alert.alert('Success', `Profile updated, ${name.trim()}!`);
+  };
+
+  return (
+    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <View style={styles.avatarSection}>
+        <View style={styles.avatarCircle}>
+          <Text style={styles.avatarEmoji}>🧑‍🎓</Text>
+        </View>
+        {editing ? (
+          <View style={styles.editRow}>
+            <TextInput
+              style={styles.nameInput}
+              value={name}
+              onChangeText={setName}
+              placeholder="Enter your name"
+              autoFocus
+            />
+            <Pressable style={styles.saveBtn} onPress={handleSave}>
+              <Ionicons name="checkmark" size={20} color={Colors.white} />
+            </Pressable>
+            <Pressable
+              style={styles.cancelBtn}
+              onPress={() => {
+                setName(profile.name);
+                setEditing(false);
+              }}
+            >
+              <Ionicons name="close" size={20} color={Colors.danger} />
+            </Pressable>
+          </View>
+        ) : (
+          <Pressable onPress={() => setEditing(true)} style={styles.nameRow}>
+            <Text style={styles.profileName}>{profile.name}</Text>
+            <Ionicons name="pencil" size={16} color={Colors.primary} />
+          </Pressable>
+        )}
+        <Text style={styles.subtitle}>Adventure Scholar</Text>
+      </View>
+
+      <View style={styles.statsGrid}>
+        <View style={styles.statCard}>
+          <Ionicons name="book" size={24} color={Colors.primary} />
+          <Text style={styles.statValue}>{studies.length}</Text>
+          <Text style={styles.statLabel}>Total Studies</Text>
+        </View>
+        <View style={styles.statCard}>
+          <Ionicons name="checkmark-circle" size={24} color={Colors.success} />
+          <Text style={styles.statValue}>{completedCount}</Text>
+          <Text style={styles.statLabel}>Completed</Text>
+        </View>
+        <View style={styles.statCard}>
+          <Ionicons name="hourglass" size={24} color={Colors.accent} />
+          <Text style={styles.statValue}>{activeCount}</Text>
+          <Text style={styles.statLabel}>In Progress</Text>
+        </View>
+        <View style={styles.statCard}>
+          <Ionicons name="flame" size={24} color={Colors.danger} />
+          <Text style={styles.statValue}>{totalProgress}</Text>
+          <Text style={styles.statLabel}>Sessions Done</Text>
+        </View>
+      </View>
+
+      <Pressable
+        style={styles.menuItem}
+        onPress={() => router.push('/reminder/')}
+      >
+        <Ionicons name="notifications" size={22} color={Colors.primary} />
+        <Text style={styles.menuLabel}>Manage Reminders</Text>
+        <Ionicons name="chevron-forward" size={20} color={Colors.textLight} />
+      </Pressable>
+
+      <Text style={styles.sectionTitle}>
+        Rewards ({rewards.length})
+      </Text>
+
+      {rewards.length === 0 ? (
+        <View style={styles.emptyRewards}>
+          <Ionicons name="trophy-outline" size={48} color={Colors.textLight} />
+          <Text style={styles.emptyText}>No rewards yet</Text>
+          <Text style={styles.emptySubtext}>
+            Complete studies to earn rewards!
+          </Text>
+        </View>
+      ) : (
+        rewards.map((reward) => (
+          <View key={reward.id} style={styles.rewardCard}>
+            <Text style={styles.rewardEmoji}>🏆</Text>
+            <View style={styles.rewardInfo}>
+              <Text style={styles.rewardTitle}>{reward.studyTitle}</Text>
+              <Text style={styles.rewardDate}>
+                Completed {new Date(reward.completedAt).toLocaleDateString()}
+              </Text>
+            </View>
+            <Text style={styles.rewardXP}>+100 XP</Text>
+          </View>
+        ))
+      )}
+
+      <View style={{ height: 30 }} />
+    </ScrollView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
+  content: {
+    padding: 16,
+  },
+  avatarSection: {
+    alignItems: 'center',
+    marginBottom: 24,
+    paddingTop: 8,
+  },
+  avatarCircle: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    backgroundColor: Colors.primaryLight + '30',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  avatarEmoji: {
+    fontSize: 44,
+  },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  profileName: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: Colors.text,
+  },
+  editRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  nameInput: {
+    fontSize: 18,
+    fontWeight: '600',
+    borderWidth: 1,
+    borderColor: Colors.primary,
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    minWidth: 180,
+    backgroundColor: Colors.white,
+    color: Colors.text,
+  },
+  saveBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: Colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cancelBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: Colors.dangerLight,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  subtitle: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+    marginTop: 4,
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginBottom: 20,
+  },
+  statCard: {
+    flex: 1,
+    minWidth: '45%',
+    backgroundColor: Colors.white,
+    borderRadius: 14,
+    padding: 16,
+    alignItems: 'center',
+    gap: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  statValue: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: Colors.text,
+  },
+  statLabel: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+    fontWeight: '500',
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.white,
+    borderRadius: 14,
+    padding: 16,
+    gap: 12,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  menuLabel: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '600',
+    color: Colors.text,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: Colors.text,
+    marginBottom: 12,
+  },
+  emptyRewards: {
+    backgroundColor: Colors.white,
+    borderRadius: 16,
+    padding: 40,
+    alignItems: 'center',
+    gap: 8,
+  },
+  emptyText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: Colors.textSecondary,
+  },
+  emptySubtext: {
+    fontSize: 13,
+    color: Colors.textLight,
+  },
+  rewardCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.white,
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 8,
+    gap: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 3,
+    elevation: 1,
+  },
+  rewardEmoji: {
+    fontSize: 28,
+  },
+  rewardInfo: {
+    flex: 1,
+  },
+  rewardTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: Colors.text,
+  },
+  rewardDate: {
+    fontSize: 12,
+    color: Colors.textLight,
+    marginTop: 2,
+  },
+  rewardXP: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: Colors.secondary,
+  },
+});
+</file>
+
+<file path="(tabs)/studies.tsx">
+import React from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  Pressable,
+  Alert,
+  ActivityIndicator,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { useApp } from '@/contexts/AppContext';
+import { Colors } from '@/constants/Colors';
+
+export default function StudiesScreen() {
+  const { studies, categories, deleteStudy, isLoading } = useApp();
+  const router = useRouter();
+
+  const getCategoryName = (categoryId: string) => {
+    const cat = categories.find((c) => c.id === categoryId);
+    return cat?.name ?? 'Uncategorized';
+  };
+
+  const getCategoryColor = (categoryId: string) => {
+    const cat = categories.find((c) => c.id === categoryId);
+    return cat?.color ?? Colors.textLight;
+  };
+
+  const handleDelete = (id: string, title: string) => {
+    Alert.alert('Delete Study', `Are you sure you want to delete "${title}"?`, [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: () => deleteStudy(id),
+      },
+    ]);
+  };
+
+  if (isLoading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.container}>
+      <FlatList
+        data={studies}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.list}
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <Ionicons name="book-outline" size={64} color={Colors.textLight} />
+            <Text style={styles.emptyTitle}>No Studies Yet</Text>
+            <Text style={styles.emptySubtitle}>
+              Tap the + button to create your first study
+            </Text>
+          </View>
+        }
+        renderItem={({ item }) => {
+          const percentage = item.target > 0
+            ? Math.round((item.progress / item.target) * 100)
+            : 0;
+          return (
+            <Pressable
+              style={styles.card}
+              onPress={() => router.push(`/study/${item.id}`)}
+            >
+              <View style={styles.cardHeader}>
+                <View style={styles.titleRow}>
+                  <Text style={styles.cardTitle} numberOfLines={1}>
+                    {item.title}
+                  </Text>
+                  {item.completed && (
+                    <Ionicons
+                      name="checkmark-circle"
+                      size={20}
+                      color={Colors.success}
+                    />
+                  )}
+                </View>
+                <View
+                  style={[
+                    styles.badge,
+                    { backgroundColor: getCategoryColor(item.categoryId) + '20' },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.badgeText,
+                      { color: getCategoryColor(item.categoryId) },
+                    ]}
+                  >
+                    {getCategoryName(item.categoryId)}
+                  </Text>
+                </View>
+              </View>
+
+              {item.description ? (
+                <Text style={styles.desc} numberOfLines={2}>
+                  {item.description}
+                </Text>
+              ) : null}
+
+              <View style={styles.progressRow}>
+                <View style={styles.progressBarBg}>
+                  <View
+                    style={[
+                      styles.progressBarFill,
+                      {
+                        width: `${percentage}%`,
+                        backgroundColor: item.completed
+                          ? Colors.success
+                          : getCategoryColor(item.categoryId),
+                      },
+                    ]}
+                  />
+                </View>
+                <Text style={styles.progressLabel}>
+                  {item.progress}/{item.target}
+                </Text>
+              </View>
+
+              <View style={styles.cardFooter}>
+                <Text style={styles.targetLabel}>
+                  Target: {item.target} sessions
+                </Text>
+                <Pressable
+                  onPress={() => handleDelete(item.id, item.title)}
+                  hitSlop={8}
+                >
+                  <Ionicons name="trash-outline" size={20} color={Colors.danger} />
+                </Pressable>
+              </View>
+            </Pressable>
+          );
+        }}
+      />
+
+      <Pressable
+        style={styles.fab}
+        onPress={() => router.push('/study/create')}
+      >
+        <Ionicons name="add" size={28} color={Colors.white} />
+      </Pressable>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  list: {
+    padding: 16,
+    paddingBottom: 80,
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    paddingTop: 80,
+    gap: 8,
+  },
+  emptyTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: Colors.textSecondary,
+  },
+  emptySubtitle: {
+    fontSize: 14,
+    color: Colors.textLight,
+  },
+  card: {
+    backgroundColor: Colors.white,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    flex: 1,
+  },
+  cardTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: Colors.text,
+    flex: 1,
+  },
+  badge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+    marginLeft: 8,
+  },
+  badgeText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  desc: {
+    fontSize: 13,
+    color: Colors.textSecondary,
+    marginBottom: 10,
+    lineHeight: 18,
+  },
+  progressRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 10,
+  },
+  progressBarBg: {
+    flex: 1,
+    height: 8,
+    backgroundColor: Colors.border,
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  progressBarFill: {
+    height: '100%',
+    borderRadius: 4,
+  },
+  progressLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: Colors.textSecondary,
+    minWidth: 45,
+    textAlign: 'right',
+  },
+  cardFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  targetLabel: {
+    fontSize: 12,
+    color: Colors.textLight,
+  },
+  fab: {
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: Colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+});
+</file>
+
+<file path="category/[id].tsx">
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TextInput,
+  Pressable,
+  Alert,
+  ScrollView,
+} from 'react-native';
+import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useApp } from '@/contexts/AppContext';
+import { Colors, CategoryColors } from '@/constants/Colors';
+
+export default function EditCategoryScreen() {
+  const { categories, updateCategory } = useApp();
+  const router = useRouter();
+  const { id } = useLocalSearchParams<{ id: string }>();
+
+  const category = categories.find((c) => c.id === id);
+
+  const [name, setName] = useState('');
+  const [selectedColor, setSelectedColor] = useState(CategoryColors[0]);
+
+  useEffect(() => {
+    if (category) {
+      setName(category.name);
+      setSelectedColor(category.color);
+    }
+  }, [category]);
+
+  const handleSave = async () => {
+    if (!category) return;
+    if (!name.trim()) {
+      Alert.alert('Error', 'Please enter a category name');
+      return;
+    }
+
+    await updateCategory({
+      ...category,
+      name: name.trim(),
+      color: selectedColor,
+    });
+
+    router.back();
+  };
+
+  if (!category) {
+    return (
+      <View style={styles.notFound}>
+        <Text style={styles.notFoundText}>Category not found</Text>
+      </View>
+    );
+  }
+
+  return (
+    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <Text style={styles.label}>Category Name *</Text>
+      <TextInput
+        style={styles.input}
+        value={name}
+        onChangeText={setName}
+        placeholder="Category name"
+        placeholderTextColor={Colors.textLight}
+      />
+
+      <Text style={styles.label}>Color</Text>
+      <View style={styles.colorGrid}>
+        {CategoryColors.map((color) => (
+          <Pressable
+            key={color}
+            style={[
+              styles.colorItem,
+              { backgroundColor: color },
+              selectedColor === color && styles.colorSelected,
+            ]}
+            onPress={() => setSelectedColor(color)}
+          />
+        ))}
+      </View>
+
+      <View style={styles.preview}>
+        <View style={[styles.previewDot, { backgroundColor: selectedColor }]} />
+        <Text style={styles.previewText}>
+          {name.trim() || 'Category Name'}
+        </Text>
+      </View>
+
+      <Pressable style={styles.saveBtn} onPress={handleSave}>
+        <Text style={styles.saveBtnText}>Save Changes</Text>
+      </Pressable>
+    </ScrollView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
+  content: {
+    padding: 20,
+  },
+  notFound: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: Colors.background,
+  },
+  notFoundText: {
+    fontSize: 18,
+    color: Colors.textSecondary,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: Colors.text,
+    marginBottom: 6,
+    marginTop: 16,
+  },
+  input: {
+    backgroundColor: Colors.white,
+    borderRadius: 12,
+    padding: 14,
+    fontSize: 16,
+    color: Colors.text,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  colorGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginTop: 8,
+  },
+  colorItem: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+  },
+  colorSelected: {
+    borderWidth: 3,
+    borderColor: Colors.text,
+  },
+  preview: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.white,
+    borderRadius: 14,
+    padding: 16,
+    gap: 12,
+    marginTop: 24,
+  },
+  previewDot: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+  },
+  previewText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: Colors.text,
+  },
+  saveBtn: {
+    backgroundColor: Colors.primary,
+    borderRadius: 14,
+    padding: 16,
+    alignItems: 'center',
+    marginTop: 28,
+  },
+  saveBtnText: {
+    color: Colors.white,
+    fontSize: 18,
+    fontWeight: '700',
+  },
+});
+</file>
+
+<file path="category/create.tsx">
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TextInput,
+  Pressable,
+  Alert,
+  ScrollView,
+} from 'react-native';
+import { useRouter } from 'expo-router';
+import { useApp } from '@/contexts/AppContext';
+import { Colors, CategoryColors } from '@/constants/Colors';
+
+export default function CreateCategoryScreen() {
+  const { addCategory } = useApp();
+  const router = useRouter();
+
+  const [name, setName] = useState('');
+  const [selectedColor, setSelectedColor] = useState(CategoryColors[0]);
+
+  const handleCreate = async () => {
+    if (!name.trim()) {
+      Alert.alert('Error', 'Please enter a category name');
+      return;
+    }
+
+    await addCategory({
+      name: name.trim(),
+      color: selectedColor,
+    });
+
+    router.back();
+  };
+
+  return (
+    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <Text style={styles.label}>Category Name *</Text>
+      <TextInput
+        style={styles.input}
+        value={name}
+        onChangeText={setName}
+        placeholder="e.g. Programming, Math, Science"
+        placeholderTextColor={Colors.textLight}
+        autoFocus
+      />
+
+      <Text style={styles.label}>Color</Text>
+      <View style={styles.colorGrid}>
+        {CategoryColors.map((color) => (
+          <Pressable
+            key={color}
+            style={[
+              styles.colorItem,
+              { backgroundColor: color },
+              selectedColor === color && styles.colorSelected,
+            ]}
+            onPress={() => setSelectedColor(color)}
+          />
+        ))}
+      </View>
+
+      <View style={styles.preview}>
+        <View style={[styles.previewDot, { backgroundColor: selectedColor }]} />
+        <Text style={styles.previewText}>
+          {name.trim() || 'Category Name'}
+        </Text>
+      </View>
+
+      <Pressable style={styles.createBtn} onPress={handleCreate}>
+        <Text style={styles.createBtnText}>Create Category</Text>
+      </Pressable>
+    </ScrollView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
+  content: {
+    padding: 20,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: Colors.text,
+    marginBottom: 6,
+    marginTop: 16,
+  },
+  input: {
+    backgroundColor: Colors.white,
+    borderRadius: 12,
+    padding: 14,
+    fontSize: 16,
+    color: Colors.text,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  colorGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginTop: 8,
+  },
+  colorItem: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+  },
+  colorSelected: {
+    borderWidth: 3,
+    borderColor: Colors.text,
+  },
+  preview: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.white,
+    borderRadius: 14,
+    padding: 16,
+    gap: 12,
+    marginTop: 24,
+  },
+  previewDot: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+  },
+  previewText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: Colors.text,
+  },
+  createBtn: {
+    backgroundColor: Colors.primary,
+    borderRadius: 14,
+    padding: 16,
+    alignItems: 'center',
+    marginTop: 28,
+  },
+  createBtnText: {
+    color: Colors.white,
+    fontSize: 18,
+    fontWeight: '700',
+  },
+});
+</file>
+
+<file path="reminder/index.tsx">
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  Pressable,
+  Alert,
+  Switch,
+  TextInput,
+  Platform,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useApp } from '@/contexts/AppContext';
+import { Colors } from '@/constants/Colors';
+
+export default function ReminderScreen() {
+  const { reminders, addReminder, updateReminder, deleteReminder } = useApp();
+  const [showAdd, setShowAdd] = useState(false);
+  const [newLabel, setNewLabel] = useState('');
+  const [newHour, setNewHour] = useState('8');
+  const [newMinute, setNewMinute] = useState('0');
+
+  const handleAdd = async () => {
+    const hour = parseInt(newHour, 10);
+    const minute = parseInt(newMinute, 10);
+
+    if (isNaN(hour) || hour < 0 || hour > 23) {
+      Alert.alert('Error', 'Hour must be between 0 and 23');
+      return;
+    }
+    if (isNaN(minute) || minute < 0 || minute > 59) {
+      Alert.alert('Error', 'Minute must be between 0 and 59');
+      return;
+    }
+
+    await addReminder({
+      hour,
+      minute,
+      enabled: true,
+      label: newLabel.trim() || 'Study Reminder',
+    });
+
+    setShowAdd(false);
+    setNewLabel('');
+    setNewHour('8');
+    setNewMinute('0');
+  };
+
+  const handleToggle = async (id: string, enabled: boolean) => {
+    const reminder = reminders.find((r) => r.id === id);
+    if (reminder) {
+      await updateReminder({ ...reminder, enabled });
+    }
+  };
+
+  const handleDelete = (id: string) => {
+    Alert.alert('Delete Reminder', 'Remove this reminder?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: () => deleteReminder(id),
+      },
+    ]);
+  };
+
+  const formatTime = (hour: number, minute: number) => {
+    const h = hour % 12 || 12;
+    const m = minute.toString().padStart(2, '0');
+    const ampm = hour < 12 ? 'AM' : 'PM';
+    return `${h}:${m} ${ampm}`;
+  };
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.info}>
+        <Ionicons name="information-circle" size={20} color={Colors.primary} />
+        <Text style={styles.infoText}>
+          Reminders will notify you daily at the set times if you have incomplete
+          studies. They work even when the app is closed.
+        </Text>
+      </View>
+
+      <FlatList
+        data={reminders}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.list}
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <Ionicons
+              name="notifications-off-outline"
+              size={48}
+              color={Colors.textLight}
+            />
+            <Text style={styles.emptyText}>No reminders set</Text>
+            <Text style={styles.emptySubtext}>
+              Add a reminder to stay on track
+            </Text>
+          </View>
+        }
+        renderItem={({ item }) => (
+          <View style={styles.reminderCard}>
+            <View style={styles.reminderInfo}>
+              <Text style={styles.reminderTime}>
+                {formatTime(item.hour, item.minute)}
+              </Text>
+              <Text style={styles.reminderLabel}>{item.label}</Text>
+            </View>
+            <Switch
+              value={item.enabled}
+              onValueChange={(val) => handleToggle(item.id, val)}
+              trackColor={{ false: Colors.border, true: Colors.primaryLight }}
+              thumbColor={item.enabled ? Colors.primary : Colors.textLight}
+            />
+            <Pressable
+              onPress={() => handleDelete(item.id)}
+              hitSlop={8}
+              style={styles.deleteBtn}
+            >
+              <Ionicons name="trash-outline" size={20} color={Colors.danger} />
+            </Pressable>
+          </View>
+        )}
+      />
+
+      {showAdd ? (
+        <View style={styles.addForm}>
+          <Text style={styles.addTitle}>New Reminder</Text>
+          <TextInput
+            style={styles.input}
+            value={newLabel}
+            onChangeText={setNewLabel}
+            placeholder="Label (optional)"
+            placeholderTextColor={Colors.textLight}
+          />
+          <View style={styles.timeRow}>
+            <View style={styles.timeInput}>
+              <Text style={styles.timeLabel}>Hour (0-23)</Text>
+              <TextInput
+                style={styles.input}
+                value={newHour}
+                onChangeText={setNewHour}
+                keyboardType="number-pad"
+                maxLength={2}
+              />
+            </View>
+            <View style={styles.timeInput}>
+              <Text style={styles.timeLabel}>Minute (0-59)</Text>
+              <TextInput
+                style={styles.input}
+                value={newMinute}
+                onChangeText={setNewMinute}
+                keyboardType="number-pad"
+                maxLength={2}
+              />
+            </View>
+          </View>
+          <View style={styles.addActions}>
+            <Pressable
+              style={styles.cancelBtn}
+              onPress={() => setShowAdd(false)}
+            >
+              <Text style={styles.cancelBtnText}>Cancel</Text>
+            </Pressable>
+            <Pressable style={styles.confirmBtn} onPress={handleAdd}>
+              <Text style={styles.confirmBtnText}>Add Reminder</Text>
+            </Pressable>
+          </View>
+        </View>
+      ) : (
+        <Pressable style={styles.fab} onPress={() => setShowAdd(true)}>
+          <Ionicons name="add" size={28} color={Colors.white} />
+        </Pressable>
+      )}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
+  info: {
+    flexDirection: 'row',
+    backgroundColor: Colors.primaryLight + '15',
+    padding: 14,
+    margin: 16,
+    marginBottom: 0,
+    borderRadius: 12,
+    gap: 10,
+    alignItems: 'flex-start',
+  },
+  infoText: {
+    flex: 1,
+    fontSize: 13,
+    color: Colors.text,
+    lineHeight: 18,
+  },
+  list: {
+    padding: 16,
+    paddingBottom: 100,
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    paddingTop: 60,
+    gap: 8,
+  },
+  emptyText: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: Colors.textSecondary,
+  },
+  emptySubtext: {
+    fontSize: 13,
+    color: Colors.textLight,
+  },
+  reminderCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.white,
+    borderRadius: 14,
+    padding: 16,
+    marginBottom: 10,
+    gap: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  reminderInfo: {
+    flex: 1,
+  },
+  reminderTime: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: Colors.text,
+  },
+  reminderLabel: {
+    fontSize: 13,
+    color: Colors.textSecondary,
+    marginTop: 2,
+  },
+  deleteBtn: {
+    marginLeft: 4,
+  },
+  addForm: {
+    backgroundColor: Colors.white,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    paddingBottom: Platform.OS === 'ios' ? 40 : 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  addTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: Colors.text,
+    marginBottom: 12,
+  },
+  input: {
+    backgroundColor: Colors.background,
+    borderRadius: 10,
+    padding: 12,
+    fontSize: 16,
+    color: Colors.text,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  timeRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 12,
+  },
+  timeInput: {
+    flex: 1,
+  },
+  timeLabel: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+    marginBottom: 4,
+  },
+  addActions: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 16,
+  },
+  cancelBtn: {
+    flex: 1,
+    borderRadius: 12,
+    padding: 14,
+    alignItems: 'center',
+    backgroundColor: Colors.border,
+  },
+  cancelBtnText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: Colors.text,
+  },
+  confirmBtn: {
+    flex: 1,
+    borderRadius: 12,
+    padding: 14,
+    alignItems: 'center',
+    backgroundColor: Colors.primary,
+  },
+  confirmBtnText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: Colors.white,
+  },
+  fab: {
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: Colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+});
+</file>
+
+<file path="study/[id].tsx">
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TextInput,
+  ScrollView,
+  Pressable,
+  Alert,
+} from 'react-native';
+import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useApp } from '@/contexts/AppContext';
+import { Colors } from '@/constants/Colors';
+import { Study } from '@/constants/Types';
+
+export default function EditStudyScreen() {
+  const { studies, categories, updateStudy } = useApp();
+  const router = useRouter();
+  const { id } = useLocalSearchParams<{ id: string }>();
+
+  const study = studies.find((s) => s.id === id);
+
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [categoryId, setCategoryId] = useState('');
+  const [notes, setNotes] = useState('');
+  const [target, setTarget] = useState('');
+
+  useEffect(() => {
+    if (study) {
+      setTitle(study.title);
+      setDescription(study.description);
+      setCategoryId(study.categoryId);
+      setNotes(study.notes);
+      setTarget(study.target.toString());
+    }
+  }, [study]);
+
+  const handleSave = async () => {
+    if (!study) return;
+    if (!title.trim()) {
+      Alert.alert('Error', 'Please enter a study title');
+      return;
+    }
+    const targetNum = parseInt(target, 10);
+    if (!targetNum || targetNum < 1) {
+      Alert.alert('Error', 'Please enter a valid target (minimum 1)');
+      return;
+    }
+
+    const updated: Study = {
+      ...study,
+      title: title.trim(),
+      description: description.trim(),
+      categoryId,
+      notes: notes.trim(),
+      target: targetNum,
+      completed: study.progress >= targetNum,
+    };
+
+    await updateStudy(updated);
+    router.back();
+  };
+
+  if (!study) {
+    return (
+      <View style={styles.notFound}>
+        <Text style={styles.notFoundText}>Study not found</Text>
+      </View>
+    );
+  }
+
+  return (
+    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <View style={styles.progressBanner}>
+        <Text style={styles.progressLabel}>
+          Progress: {study.progress} / {study.target}
+        </Text>
+        {study.completed && (
+          <Text style={styles.completedBadge}>✅ Completed</Text>
+        )}
+      </View>
+
+      <Text style={styles.label}>Title *</Text>
+      <TextInput
+        style={styles.input}
+        value={title}
+        onChangeText={setTitle}
+        placeholder="Study title"
+        placeholderTextColor={Colors.textLight}
+      />
+
+      <Text style={styles.label}>Description</Text>
+      <TextInput
+        style={[styles.input, styles.textArea]}
+        value={description}
+        onChangeText={setDescription}
+        placeholder="Description"
+        placeholderTextColor={Colors.textLight}
+        multiline
+        numberOfLines={3}
+      />
+
+      <Text style={styles.label}>Category</Text>
+      {categories.length === 0 ? (
+        <Text style={styles.hint}>No categories available.</Text>
+      ) : (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.categoryScroll}
+        >
+          {categories.map((cat) => (
+            <Pressable
+              key={cat.id}
+              style={[
+                styles.categoryChip,
+                {
+                  backgroundColor:
+                    categoryId === cat.id ? cat.color : cat.color + '20',
+                },
+              ]}
+              onPress={() =>
+                setCategoryId(categoryId === cat.id ? '' : cat.id)
+              }
+            >
+              <Text
+                style={[
+                  styles.categoryChipText,
+                  {
+                    color: categoryId === cat.id ? Colors.white : cat.color,
+                  },
+                ]}
+              >
+                {cat.name}
+              </Text>
+            </Pressable>
+          ))}
+        </ScrollView>
+      )}
+
+      <Text style={styles.label}>Notes</Text>
+      <TextInput
+        style={[styles.input, styles.textArea]}
+        value={notes}
+        onChangeText={setNotes}
+        placeholder="Notes"
+        placeholderTextColor={Colors.textLight}
+        multiline
+        numberOfLines={3}
+      />
+
+      <Text style={styles.label}>Target (sessions) *</Text>
+      <TextInput
+        style={styles.input}
+        value={target}
+        onChangeText={setTarget}
+        placeholder="Target"
+        placeholderTextColor={Colors.textLight}
+        keyboardType="number-pad"
+      />
+
+      <Pressable style={styles.saveBtn} onPress={handleSave}>
+        <Text style={styles.saveBtnText}>Save Changes</Text>
+      </Pressable>
+
+      <View style={{ height: 40 }} />
+    </ScrollView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
+  content: {
+    padding: 20,
+  },
+  notFound: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: Colors.background,
+  },
+  notFoundText: {
+    fontSize: 18,
+    color: Colors.textSecondary,
+  },
+  progressBanner: {
+    backgroundColor: Colors.primaryLight + '20',
+    borderRadius: 12,
+    padding: 14,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  progressLabel: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: Colors.primary,
+  },
+  completedBadge: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: Colors.success,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: Colors.text,
+    marginBottom: 6,
+    marginTop: 16,
+  },
+  input: {
+    backgroundColor: Colors.white,
+    borderRadius: 12,
+    padding: 14,
+    fontSize: 16,
+    color: Colors.text,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  textArea: {
+    minHeight: 80,
+    textAlignVertical: 'top',
+  },
+  hint: {
+    fontSize: 13,
+    color: Colors.textLight,
+    fontStyle: 'italic',
+    marginTop: 4,
+  },
+  categoryScroll: {
+    marginTop: 4,
+  },
+  categoryChip: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 10,
+    marginRight: 8,
+  },
+  categoryChipText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  saveBtn: {
+    backgroundColor: Colors.primary,
+    borderRadius: 14,
+    padding: 16,
+    alignItems: 'center',
+    marginTop: 28,
+  },
+  saveBtnText: {
+    color: Colors.white,
+    fontSize: 18,
+    fontWeight: '700',
+  },
+});
+</file>
+
+<file path="study/create.tsx">
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TextInput,
+  ScrollView,
+  Pressable,
+  Alert,
+} from 'react-native';
+import { useRouter } from 'expo-router';
+import { useApp } from '@/contexts/AppContext';
+import { Colors } from '@/constants/Colors';
+
+export default function CreateStudyScreen() {
+  const { categories, addStudy } = useApp();
+  const router = useRouter();
+
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [categoryId, setCategoryId] = useState('');
+  const [notes, setNotes] = useState('');
+  const [target, setTarget] = useState('');
+
+  const handleCreate = async () => {
+    if (!title.trim()) {
+      Alert.alert('Error', 'Please enter a study title');
+      return;
+    }
+    const targetNum = parseInt(target, 10);
+    if (!targetNum || targetNum < 1) {
+      Alert.alert('Error', 'Please enter a valid target (minimum 1)');
+      return;
+    }
+
+    await addStudy({
+      title: title.trim(),
+      description: description.trim(),
+      categoryId,
+      notes: notes.trim(),
+      target: targetNum,
+    });
+
+    router.back();
+  };
+
+  return (
+    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <Text style={styles.label}>Title *</Text>
+      <TextInput
+        style={styles.input}
+        value={title}
+        onChangeText={setTitle}
+        placeholder="e.g. Learn React Native"
+        placeholderTextColor={Colors.textLight}
+      />
+
+      <Text style={styles.label}>Description</Text>
+      <TextInput
+        style={[styles.input, styles.textArea]}
+        value={description}
+        onChangeText={setDescription}
+        placeholder="What is this study about?"
+        placeholderTextColor={Colors.textLight}
+        multiline
+        numberOfLines={3}
+      />
+
+      <Text style={styles.label}>Category</Text>
+      {categories.length === 0 ? (
+        <Text style={styles.hint}>
+          No categories yet. Create one in the Categories tab first.
+        </Text>
+      ) : (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.categoryScroll}
+        >
+          {categories.map((cat) => (
+            <Pressable
+              key={cat.id}
+              style={[
+                styles.categoryChip,
+                {
+                  backgroundColor:
+                    categoryId === cat.id ? cat.color : cat.color + '20',
+                },
+              ]}
+              onPress={() =>
+                setCategoryId(categoryId === cat.id ? '' : cat.id)
+              }
+            >
+              <Text
+                style={[
+                  styles.categoryChipText,
+                  {
+                    color: categoryId === cat.id ? Colors.white : cat.color,
+                  },
+                ]}
+              >
+                {cat.name}
+              </Text>
+            </Pressable>
+          ))}
+        </ScrollView>
+      )}
+
+      <Text style={styles.label}>Notes</Text>
+      <TextInput
+        style={[styles.input, styles.textArea]}
+        value={notes}
+        onChangeText={setNotes}
+        placeholder="Additional notes..."
+        placeholderTextColor={Colors.textLight}
+        multiline
+        numberOfLines={3}
+      />
+
+      <Text style={styles.label}>Target (how many sessions) *</Text>
+      <TextInput
+        style={styles.input}
+        value={target}
+        onChangeText={setTarget}
+        placeholder="e.g. 10"
+        placeholderTextColor={Colors.textLight}
+        keyboardType="number-pad"
+      />
+
+      <Pressable style={styles.createBtn} onPress={handleCreate}>
+        <Text style={styles.createBtnText}>Create Study</Text>
+      </Pressable>
+
+      <View style={{ height: 40 }} />
+    </ScrollView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
+  content: {
+    padding: 20,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: Colors.text,
+    marginBottom: 6,
+    marginTop: 16,
+  },
+  input: {
+    backgroundColor: Colors.white,
+    borderRadius: 12,
+    padding: 14,
+    fontSize: 16,
+    color: Colors.text,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  textArea: {
+    minHeight: 80,
+    textAlignVertical: 'top',
+  },
+  hint: {
+    fontSize: 13,
+    color: Colors.textLight,
+    fontStyle: 'italic',
+    marginTop: 4,
+  },
+  categoryScroll: {
+    marginTop: 4,
+  },
+  categoryChip: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 10,
+    marginRight: 8,
+  },
+  categoryChipText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  createBtn: {
+    backgroundColor: Colors.primary,
+    borderRadius: 14,
+    padding: 16,
+    alignItems: 'center',
+    marginTop: 28,
+  },
+  createBtnText: {
+    color: Colors.white,
+    fontSize: 18,
+    fontWeight: '700',
+  },
+});
+</file>
+
+</files>
