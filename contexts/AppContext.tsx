@@ -14,6 +14,7 @@ import {
   sendRewardNotification,
   requestNotificationPermissions,
 } from '@/utils/notifications';
+import { formatDateToString, getCurrentDate } from '@/utils/date';
 
 interface AppContextType {
   studies: Study[];
@@ -54,12 +55,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     (async () => {
-      const [s, c, p, rm, rw] = await Promise.all([
+      const [s, h, c, p, rm, rw, cd] = await Promise.all([
         Storage.loadStudies(),
+        Storage.loadHistoryStudies(),
         Storage.loadCategories(),
         Storage.loadProfile(),
         Storage.loadReminders(),
         Storage.loadRewards(),
+        Storage.loadCurrentDate(),
       ]);
       setStudies(s);
       setCategories(c);
@@ -67,6 +70,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setReminders(rm);
       setRewards(rw);
       setIsLoading(false);
+
+      if (cd !== formatDateToString(getCurrentDate(), 'yyyy-MM-dd')) {
+        Storage.saveHistoryStudies({
+          ...h,
+          [formatDateToString(getCurrentDate(), 'yyyy-MM-dd')]: s,
+        });
+        Storage.saveCurrentDate(getCurrentDate());
+        const newStudies = s.map((st) => ({ ...st, completed: false, progress: 0 }));
+        Storage.saveStudies(newStudies);
+        setStudies(newStudies);
+      }
 
       await requestNotificationPermissions();
       const incompleteCount = s.filter((st) => !st.completed).length;

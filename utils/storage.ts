@@ -3,13 +3,16 @@ import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import * as DocumentPicker from 'expo-document-picker';
 import { Study, Category, UserProfile, Reminder, Reward } from '@/constants/Types';
+import { formatDateToString, getYesterday } from './date';
 
 const KEYS = {
   STUDIES: 'adventure_study_studies',
+  HISTORY_STUDIES: 'adventure_study_history_studies',
   CATEGORIES: 'adventure_study_categories',
   PROFILE: 'adventure_study_profile',
   REMINDERS: 'adventure_study_reminders',
   REWARDS: 'adventure_study_rewards',
+  CURRENT_DATE: 'adventure_study_current_date',
 };
 
 async function load<T>(key: string, defaultValue: T): Promise<T> {
@@ -28,6 +31,9 @@ async function save<T>(key: string, value: T): Promise<void> {
 export const loadStudies = () => load<Study[]>(KEYS.STUDIES, []);
 export const saveStudies = (studies: Study[]) => save(KEYS.STUDIES, studies);
 
+export const loadHistoryStudies = () => load<Record<string, Study[]>>(KEYS.HISTORY_STUDIES, {});
+export const saveHistoryStudies = (studies: Record<string, Study[]>) => save(KEYS.HISTORY_STUDIES, studies);
+
 export const loadCategories = () => load<Category[]>(KEYS.CATEGORIES, []);
 export const saveCategories = (categories: Category[]) => save(KEYS.CATEGORIES, categories);
 
@@ -40,6 +46,9 @@ export const saveReminders = (reminders: Reminder[]) => save(KEYS.REMINDERS, rem
 export const loadRewards = () => load<Reward[]>(KEYS.REWARDS, []);
 export const saveRewards = (rewards: Reward[]) => save(KEYS.REWARDS, rewards);
 
+export const loadCurrentDate = () => load<string>(KEYS.CURRENT_DATE, formatDateToString(getYesterday(), 'yyyy-MM-dd'));
+export const saveCurrentDate = (date: Date) => save(KEYS.CURRENT_DATE, formatDateToString(date, 'yyyy-MM-dd'));
+
 export const generateId = () =>
   Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
 
@@ -48,18 +57,21 @@ export interface ExportData {
   exportedAt: string;
   profile: UserProfile;
   studies: Study[];
+  historyStudies: Record<string, Study[]>;
   categories: Category[];
   reminders: Reminder[];
   rewards: Reward[];
 }
 
 export async function exportData(): Promise<void> {
-  const [studies, categories, profile, reminders, rewards] = await Promise.all([
+  const [studies, historyStudies, categories, profile, reminders, rewards] = await Promise.all([
     loadStudies(),
+    loadHistoryStudies(),
     loadCategories(),
     loadProfile(),
     loadReminders(),
     loadRewards(),
+    loadCurrentDate(),
   ]);
 
   const data: ExportData = {
@@ -67,6 +79,7 @@ export async function exportData(): Promise<void> {
     exportedAt: new Date().toISOString(),
     profile,
     studies,
+    historyStudies,
     categories,
     reminders,
     rewards,
