@@ -54,6 +54,16 @@ export default function RootLayout() {
             headerTintColor: Colors.text,
           }}
         />
+        <Stack.Screen
+          name="reminder/index"
+          options={{
+            presentation: 'modal',
+            headerShown: true,
+            title: 'Reminder',
+            headerStyle: { backgroundColor: Colors.white },
+            headerTintColor: Colors.text,
+          }}
+        />
       </Stack>
     </AppProvider>
   );

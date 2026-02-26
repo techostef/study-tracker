@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -8,45 +8,90 @@ import {
   Alert,
   Switch,
   TextInput,
-  Platform,
+  Modal,
+  ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '@/contexts/AppContext';
 import { Colors } from '@/constants/Colors';
-import { useNavigation } from 'expo-router';
+import { Reminder } from '@/constants/Types';
+
+type SortKey = 'label' | 'time' | 'createdAt';
+
+const HOURS = Array.from({ length: 24 }, (_, i) => i);
+const MINUTES = Array.from({ length: 60 }, (_, i) => i);
+
+function TimePickerColumn({
+  values,
+  selected,
+  onSelect,
+  label,
+}: {
+  values: number[];
+  selected: number;
+  onSelect: (v: number) => void;
+  label: string;
+}) {
+  return (
+    <View style={styles.pickerCol}>
+      <Text style={styles.pickerColLabel}>{label}</Text>
+      <ScrollView
+        style={styles.pickerScroll}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.pickerScrollContent}
+      >
+        {values.map((v) => (
+          <Pressable
+            key={v}
+            style={[styles.pickerItem, selected === v && styles.pickerItemSelected]}
+            onPress={() => onSelect(v)}
+          >
+            <Text
+              style={[
+                styles.pickerItemText,
+                selected === v && styles.pickerItemTextSelected,
+              ]}
+            >
+              {v.toString().padStart(2, '0')}
+            </Text>
+          </Pressable>
+        ))}
+      </ScrollView>
+    </View>
+  );
+}
 
 export default function ReminderScreen() {
-  const navigation = useNavigation();
   const { reminders, addReminder, updateReminder, deleteReminder } = useApp();
   const [showAdd, setShowAdd] = useState(false);
   const [newLabel, setNewLabel] = useState('');
-  const [newHour, setNewHour] = useState('8');
-  const [newMinute, setNewMinute] = useState('0');
+  const [newHour, setNewHour] = useState(8);
+  const [newMinute, setNewMinute] = useState(0);
+  const [sortKey, setSortKey] = useState<SortKey>('time');
+
+  const sortedReminders = useMemo(() => {
+    const copy = [...reminders];
+    if (sortKey === 'label') {
+      copy.sort((a, b) => a.label.localeCompare(b.label));
+    } else if (sortKey === 'time') {
+      copy.sort((a, b) => a.hour * 60 + a.minute - (b.hour * 60 + b.minute));
+    } else if (sortKey === 'createdAt') {
+      copy.sort((a, b) => a.id.localeCompare(b.id));
+    }
+    return copy;
+  }, [reminders, sortKey]);
 
   const handleAdd = async () => {
-    const hour = parseInt(newHour, 10);
-    const minute = parseInt(newMinute, 10);
-
-    if (isNaN(hour) || hour < 0 || hour > 23) {
-      Alert.alert('Error', 'Hour must be between 0 and 23');
-      return;
-    }
-    if (isNaN(minute) || minute < 0 || minute > 59) {
-      Alert.alert('Error', 'Minute must be between 0 and 59');
-      return;
-    }
-
     await addReminder({
-      hour,
-      minute,
+      hour: newHour,
+      minute: newMinute,
       enabled: true,
       label: newLabel.trim() || 'Study Reminder',
     });
-
     setShowAdd(false);
     setNewLabel('');
-    setNewHour('8');
-    setNewMinute('0');
+    setNewHour(8);
+    setNewMinute(0);
   };
 
   const handleToggle = async (id: string, enabled: boolean) => {
@@ -74,14 +119,14 @@ export default function ReminderScreen() {
     return `${h}:${m} ${ampm}`;
   };
 
+  const SORT_OPTIONS: { key: SortKey; label: string; icon: string }[] = [
+    { key: 'time', label: 'Time', icon: 'time-outline' },
+    { key: 'label', label: 'Label', icon: 'text-outline' },
+    { key: 'createdAt', label: 'Created', icon: 'calendar-outline' },
+  ];
+
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Pressable onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color={Colors.text} style={styles.backBtn} />
-        </Pressable>
-        <Text style={styles.headerTitle}>Reminders</Text>
-      </View>
       <View style={styles.info}>
         <Ionicons name="information-circle" size={20} color={Colors.primary} />
         <Text style={styles.infoText}>
@@ -90,8 +135,33 @@ export default function ReminderScreen() {
         </Text>
       </View>
 
+      <View style={styles.sortBar}>
+        <Text style={styles.sortBarLabel}>Sort by:</Text>
+        {SORT_OPTIONS.map((opt) => (
+          <Pressable
+            key={opt.key}
+            style={[styles.sortBtn, sortKey === opt.key && styles.sortBtnActive]}
+            onPress={() => setSortKey(opt.key)}
+          >
+            <Ionicons
+              name={opt.icon as any}
+              size={14}
+              color={sortKey === opt.key ? Colors.white : Colors.textSecondary}
+            />
+            <Text
+              style={[
+                styles.sortBtnText,
+                sortKey === opt.key && styles.sortBtnTextActive,
+              ]}
+            >
+              {opt.label}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
+
       <FlatList
-        data={reminders}
+        data={sortedReminders}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
         ListEmptyComponent={
@@ -107,7 +177,7 @@ export default function ReminderScreen() {
             </Text>
           </View>
         }
-        renderItem={({ item }) => (
+        renderItem={({ item }: { item: Reminder }) => (
           <View style={styles.reminderCard}>
             <View style={styles.reminderInfo}>
               <Text style={styles.reminderTime}>
@@ -132,75 +202,72 @@ export default function ReminderScreen() {
         )}
       />
 
-      {showAdd ? (
-        <View style={styles.addForm}>
-          <Text style={styles.addTitle}>New Reminder</Text>
-          <TextInput
-            style={styles.input}
-            value={newLabel}
-            onChangeText={setNewLabel}
-            placeholder="Label (optional)"
-            placeholderTextColor={Colors.textLight}
-          />
-          <View style={styles.timeRow}>
-            <View style={styles.timeInput}>
-              <Text style={styles.timeLabel}>Hour (0-23)</Text>
-              <TextInput
-                style={styles.input}
-                value={newHour}
-                onChangeText={setNewHour}
-                keyboardType="number-pad"
-                maxLength={2}
+      <Pressable style={styles.fab} onPress={() => setShowAdd(true)}>
+        <Ionicons name="add" size={28} color={Colors.white} />
+      </Pressable>
+
+      <Modal
+        visible={showAdd}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowAdd(false)}
+      >
+        <Pressable style={styles.modalOverlay} onPress={() => setShowAdd(false)}>
+          <Pressable style={styles.modalCard} onPress={(e) => e.stopPropagation()}>
+            <Text style={styles.addTitle}>New Reminder</Text>
+
+            <TextInput
+              style={styles.input}
+              value={newLabel}
+              onChangeText={setNewLabel}
+              placeholder="Label (optional)"
+              placeholderTextColor={Colors.textLight}
+            />
+
+            <Text style={styles.timePickerTitle}>Select Time</Text>
+            <View style={styles.timePickerPreview}>
+              <Text style={styles.timePickerPreviewText}>
+                {formatTime(newHour, newMinute)}
+              </Text>
+            </View>
+
+            <View style={styles.timePickerRow}>
+              <TimePickerColumn
+                values={HOURS}
+                selected={newHour}
+                onSelect={setNewHour}
+                label="Hour"
+              />
+              <View style={styles.timeSeparator}>
+                <Text style={styles.timeSeparatorText}>:</Text>
+              </View>
+              <TimePickerColumn
+                values={MINUTES}
+                selected={newMinute}
+                onSelect={setNewMinute}
+                label="Minute"
               />
             </View>
-            <View style={styles.timeInput}>
-              <Text style={styles.timeLabel}>Minute (0-59)</Text>
-              <TextInput
-                style={styles.input}
-                value={newMinute}
-                onChangeText={setNewMinute}
-                keyboardType="number-pad"
-                maxLength={2}
-              />
+
+            <View style={styles.addActions}>
+              <Pressable
+                style={styles.cancelBtn}
+                onPress={() => setShowAdd(false)}
+              >
+                <Text style={styles.cancelBtnText}>Cancel</Text>
+              </Pressable>
+              <Pressable style={styles.confirmBtn} onPress={handleAdd}>
+                <Text style={styles.confirmBtnText}>Add Reminder</Text>
+              </Pressable>
             </View>
-          </View>
-          <View style={styles.addActions}>
-            <Pressable
-              style={styles.cancelBtn}
-              onPress={() => setShowAdd(false)}
-            >
-              <Text style={styles.cancelBtnText}>Cancel</Text>
-            </Pressable>
-            <Pressable style={styles.confirmBtn} onPress={handleAdd}>
-              <Text style={styles.confirmBtnText}>Add Reminder</Text>
-            </Pressable>
-          </View>
-        </View>
-      ) : (
-        <Pressable style={styles.fab} onPress={() => setShowAdd(true)}>
-          <Ionicons name="add" size={28} color={Colors.white} />
+          </Pressable>
         </Pressable>
-      )}
+      </Modal>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  backBtn: {
-    marginRight: 16,
-  },
-  header: {
-    padding: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-    backgroundColor: Colors.white,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: Colors.text,
-  },
   container: {
     flex: 1,
     backgroundColor: Colors.background,
@@ -220,6 +287,42 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: Colors.text,
     lineHeight: 18,
+  },
+  sortBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    gap: 8,
+  },
+  sortBarLabel: {
+    fontSize: 13,
+    color: Colors.textSecondary,
+    fontWeight: '500',
+    marginRight: 4,
+  },
+  sortBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    backgroundColor: Colors.white,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  sortBtnActive: {
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
+  },
+  sortBtnText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: Colors.textSecondary,
+  },
+  sortBtnTextActive: {
+    color: Colors.white,
   },
   list: {
     padding: 16,
@@ -269,23 +372,47 @@ const styles = StyleSheet.create({
   deleteBtn: {
     marginLeft: 4,
   },
-  addForm: {
-    backgroundColor: Colors.white,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 20,
-    paddingBottom: Platform.OS === 'ios' ? 40 : 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.1,
+  fab: {
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: Colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
     shadowRadius: 8,
-    elevation: 8,
+    elevation: 6,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: Colors.overlay,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  modalCard: {
+    backgroundColor: Colors.white,
+    borderRadius: 24,
+    padding: 24,
+    width: '100%',
+    maxWidth: 400,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 24,
+    elevation: 12,
   },
   addTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '700',
     color: Colors.text,
-    marginBottom: 12,
+    marginBottom: 16,
+    textAlign: 'center',
   },
   input: {
     backgroundColor: Colors.background,
@@ -295,24 +422,84 @@ const styles = StyleSheet.create({
     color: Colors.text,
     borderWidth: 1,
     borderColor: Colors.border,
+    marginBottom: 16,
   },
-  timeRow: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 12,
-  },
-  timeInput: {
-    flex: 1,
-  },
-  timeLabel: {
-    fontSize: 12,
+  timePickerTitle: {
+    fontSize: 13,
+    fontWeight: '600',
     color: Colors.textSecondary,
-    marginBottom: 4,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  timePickerPreview: {
+    backgroundColor: Colors.primary + '15',
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    alignSelf: 'center',
+    marginBottom: 12,
+  },
+  timePickerPreviewText: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: Colors.primary,
+    letterSpacing: 1,
+  },
+  timePickerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginBottom: 16,
+  },
+  pickerCol: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  pickerColLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: Colors.textSecondary,
+    marginBottom: 6,
+  },
+  pickerScroll: {
+    height: 160,
+    width: '100%',
+  },
+  pickerScrollContent: {
+    paddingVertical: 4,
+  },
+  pickerItem: {
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    marginVertical: 2,
+    marginHorizontal: 4,
+    alignItems: 'center',
+  },
+  pickerItemSelected: {
+    backgroundColor: Colors.primary,
+  },
+  pickerItemText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: Colors.text,
+  },
+  pickerItemTextSelected: {
+    color: Colors.white,
+    fontWeight: '700',
+  },
+  timeSeparator: {
+    paddingBottom: 20,
+  },
+  timeSeparatorText: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: Colors.textSecondary,
   },
   addActions: {
     flexDirection: 'row',
     gap: 12,
-    marginTop: 16,
   },
   cancelBtn: {
     flex: 1,
@@ -337,21 +524,5 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: Colors.white,
-  },
-  fab: {
-    position: 'absolute',
-    bottom: 20,
-    right: 20,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: Colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
   },
 });
