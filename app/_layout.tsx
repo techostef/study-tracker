@@ -1,10 +1,12 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { AppProvider } from '@/contexts/AppContext';
+import { LanguageProvider } from '@/contexts/LanguageContext';
 import { Colors } from '@/constants/Colors';
 
 export default function RootLayout() {
   return (
+    <LanguageProvider>
     <AppProvider>
       <StatusBar style="dark" />
       <Stack
@@ -66,5 +68,6 @@ export default function RootLayout() {
         />
       </Stack>
     </AppProvider>
+    </LanguageProvider>
   );
 }

@@ -11,9 +11,11 @@ import {
 import { useRouter } from 'expo-router';
 import { useApp } from '@/contexts/AppContext';
 import { Colors, CategoryColors } from '@/constants/Colors';
+import { useLang } from '@/contexts/LanguageContext';
 
 export default function CreateCategoryScreen() {
   const { addCategory } = useApp();
+  const { t } = useLang();
   const router = useRouter();
 
   const [name, setName] = useState('');
@@ -21,7 +23,7 @@ export default function CreateCategoryScreen() {
 
   const handleCreate = async () => {
     if (!name.trim()) {
-      Alert.alert('Error', 'Please enter a category name');
+      Alert.alert(t.categoryForm.error, t.categoryForm.nameRequired);
       return;
     }
 
@@ -35,17 +37,17 @@ export default function CreateCategoryScreen() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.label}>Category Name *</Text>
+      <Text style={styles.label}>{t.categoryForm.name} *</Text>
       <TextInput
         style={styles.input}
         value={name}
         onChangeText={setName}
-        placeholder="e.g. Programming, Math, Science"
+        placeholder={t.categoryForm.namePlaceholder}
         placeholderTextColor={Colors.textLight}
         autoFocus
       />
 
-      <Text style={styles.label}>Color</Text>
+      <Text style={styles.label}>{t.categoryForm.color}</Text>
       <View style={styles.colorGrid}>
         {CategoryColors.map((color) => (
           <Pressable
@@ -68,7 +70,7 @@ export default function CreateCategoryScreen() {
       </View>
 
       <Pressable style={styles.createBtn} onPress={handleCreate}>
-        <Text style={styles.createBtnText}>Create Category</Text>
+        <Text style={styles.createBtnText}>{t.categoryForm.save}</Text>
       </Pressable>
     </ScrollView>
   );

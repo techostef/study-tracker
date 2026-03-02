@@ -11,9 +11,11 @@ import {
 import { useRouter } from 'expo-router';
 import { useApp } from '@/contexts/AppContext';
 import { Colors } from '@/constants/Colors';
+import { useLang } from '@/contexts/LanguageContext';
 
 export default function CreateStudyScreen() {
   const { categories, addStudy } = useApp();
+  const { t } = useLang();
   const router = useRouter();
 
   const [title, setTitle] = useState('');
@@ -24,12 +26,12 @@ export default function CreateStudyScreen() {
 
   const handleCreate = async () => {
     if (!title.trim()) {
-      Alert.alert('Error', 'Please enter a study title');
+      Alert.alert(t.studyForm.error, t.studyForm.titleRequired);
       return;
     }
     const targetNum = parseInt(target, 10);
     if (!targetNum || targetNum < 1) {
-      Alert.alert('Error', 'Please enter a valid target (minimum 1)');
+      Alert.alert(t.studyForm.error, t.studyForm.targetRequired);
       return;
     }
 
@@ -46,30 +48,30 @@ export default function CreateStudyScreen() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.label}>Title *</Text>
+      <Text style={styles.label}>{t.studyForm.title} *</Text>
       <TextInput
         style={styles.input}
         value={title}
         onChangeText={setTitle}
-        placeholder="e.g. Learn React Native"
+        placeholder={t.studyForm.titlePlaceholder}
         placeholderTextColor={Colors.textLight}
       />
 
-      <Text style={styles.label}>Description</Text>
+      <Text style={styles.label}>{t.studyForm.description}</Text>
       <TextInput
         style={[styles.input, styles.textArea]}
         value={description}
         onChangeText={setDescription}
-        placeholder="What is this study about?"
+        placeholder={t.studyForm.descPlaceholder}
         placeholderTextColor={Colors.textLight}
         multiline
         numberOfLines={3}
       />
 
-      <Text style={styles.label}>Category</Text>
+      <Text style={styles.label}>{t.studyForm.category}</Text>
       {categories.length === 0 ? (
         <Text style={styles.hint}>
-          No categories yet. Create one in the Categories tab first.
+          {t.studyForm.selectCategory}
         </Text>
       ) : (
         <ScrollView
@@ -117,7 +119,7 @@ export default function CreateStudyScreen() {
         numberOfLines={3}
       />
 
-      <Text style={styles.label}>Target (how many sessions) *</Text>
+      <Text style={styles.label}>{t.studyForm.targetSessions} *</Text>
       <TextInput
         style={styles.input}
         value={target}
@@ -128,7 +130,7 @@ export default function CreateStudyScreen() {
       />
 
       <Pressable style={styles.createBtn} onPress={handleCreate}>
-        <Text style={styles.createBtnText}>Create Study</Text>
+        <Text style={styles.createBtnText}>{t.studyForm.save}</Text>
       </Pressable>
 
       <View style={{ height: 40 }} />

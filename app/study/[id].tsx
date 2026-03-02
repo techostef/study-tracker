@@ -12,9 +12,11 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useApp } from '@/contexts/AppContext';
 import { Colors } from '@/constants/Colors';
 import { Study } from '@/constants/Types';
+import { useLang } from '@/contexts/LanguageContext';
 
 export default function EditStudyScreen() {
   const { studies, categories, updateStudy } = useApp();
+  const { t } = useLang();
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
 
@@ -39,12 +41,12 @@ export default function EditStudyScreen() {
   const handleSave = async () => {
     if (!study) return;
     if (!title.trim()) {
-      Alert.alert('Error', 'Please enter a study title');
+      Alert.alert(t.studyForm.error, t.studyForm.titleRequired);
       return;
     }
     const targetNum = parseInt(target, 10);
     if (!targetNum || targetNum < 1) {
-      Alert.alert('Error', 'Please enter a valid target (minimum 1)');
+      Alert.alert(t.studyForm.error, t.studyForm.targetRequired);
       return;
     }
 
@@ -81,29 +83,29 @@ export default function EditStudyScreen() {
         )}
       </View>
 
-      <Text style={styles.label}>Title *</Text>
+      <Text style={styles.label}>{t.studyForm.title} *</Text>
       <TextInput
         style={styles.input}
         value={title}
         onChangeText={setTitle}
-        placeholder="Study title"
+        placeholder={t.studyForm.titlePlaceholder}
         placeholderTextColor={Colors.textLight}
       />
 
-      <Text style={styles.label}>Description</Text>
+      <Text style={styles.label}>{t.studyForm.description}</Text>
       <TextInput
         style={[styles.input, styles.textArea]}
         value={description}
         onChangeText={setDescription}
-        placeholder="Description"
+        placeholder={t.studyForm.descPlaceholder}
         placeholderTextColor={Colors.textLight}
         multiline
         numberOfLines={3}
       />
 
-      <Text style={styles.label}>Category</Text>
+      <Text style={styles.label}>{t.studyForm.category}</Text>
       {categories.length === 0 ? (
-        <Text style={styles.hint}>No categories available.</Text>
+        <Text style={styles.hint}>{t.studyForm.selectCategory}</Text>
       ) : (
         <ScrollView
           horizontal
@@ -150,18 +152,18 @@ export default function EditStudyScreen() {
         numberOfLines={3}
       />
 
-      <Text style={styles.label}>Target (sessions) *</Text>
+      <Text style={styles.label}>{t.studyForm.targetSessions} *</Text>
       <TextInput
         style={styles.input}
         value={target}
         onChangeText={setTarget}
-        placeholder="Target"
+        placeholder="e.g. 10"
         placeholderTextColor={Colors.textLight}
         keyboardType="number-pad"
       />
 
       <Pressable style={styles.saveBtn} onPress={handleSave}>
-        <Text style={styles.saveBtnText}>Save Changes</Text>
+        <Text style={styles.saveBtnText}>{t.studyForm.update}</Text>
       </Pressable>
 
       <View style={{ height: 40 }} />

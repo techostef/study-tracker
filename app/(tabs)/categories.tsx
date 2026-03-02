@@ -12,9 +12,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useApp } from '@/contexts/AppContext';
 import { Colors } from '@/constants/Colors';
+import { useLang } from '@/contexts/LanguageContext';
 
 export default function CategoriesScreen() {
   const { categories, studies, deleteCategory, isLoading } = useApp();
+  const { t } = useLang();
   const router = useRouter();
 
   const getStudyCount = (categoryId: string) =>
@@ -23,16 +25,16 @@ export default function CategoriesScreen() {
   const handleDelete = (id: string, name: string) => {
     const count = getStudyCount(id);
     const warning = count > 0
-      ? `\n\n⚠️ ${count} ${count === 1 ? 'study uses' : 'studies use'} this category.`
+      ? `\n\n⚠️ ${count} ${count === 1 ? t.categories.studyUses : t.categories.studiesUse}`
       : '';
 
     Alert.alert(
-      'Delete Category',
-      `Are you sure you want to delete "${name}"?${warning}`,
+      t.categories.deleteCategory,
+      `${t.categories.deleteConfirm} "${name}"?${warning}`,
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t.categories.cancel, style: 'cancel' },
         {
-          text: 'Delete',
+          text: t.categories.delete,
           style: 'destructive',
           onPress: () => deleteCategory(id),
         },
@@ -57,9 +59,9 @@ export default function CategoriesScreen() {
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Ionicons name="folder-outline" size={64} color={Colors.textLight} />
-            <Text style={styles.emptyTitle}>No Categories Yet</Text>
+            <Text style={styles.emptyTitle}>{t.categories.noCategoriesYet}</Text>
             <Text style={styles.emptySubtitle}>
-              Create categories to organize your studies
+              {t.categories.createToOrganize}
             </Text>
           </View>
         }
@@ -77,7 +79,7 @@ export default function CategoriesScreen() {
                 <View style={styles.cardInfo}>
                   <Text style={styles.cardTitle}>{item.name}</Text>
                   <Text style={styles.cardSubtitle}>
-                    {count} {count === 1 ? 'study' : 'studies'}
+                    {count} {count === 1 ? t.categories.study : t.categories.studiesLabel}
                   </Text>
                 </View>
                 <Pressable

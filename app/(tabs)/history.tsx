@@ -14,6 +14,8 @@ import { Colors } from '@/constants/Colors';
 import { Study } from '@/constants/Types';
 import * as Storage from '@/utils/storage';
 import { useEffect } from 'react';
+import { useLang } from '@/contexts/LanguageContext';
+import AdBanner from '@/components/AdBanner';
 
 type Period = 'weekly' | 'monthly' | 'yearly';
 
@@ -163,6 +165,7 @@ function BarChart({
 
 export default function HistoryScreen() {
   const { isLoading } = useApp();
+  const { t } = useLang();
   const [period, setPeriod] = useState<Period>('weekly');
   const [historyStudies, setHistoryStudies] = useState<Record<string, Study[]>>({});
   const [loadingHistory, setLoadingHistory] = useState(true);
@@ -240,12 +243,12 @@ export default function HistoryScreen() {
   const perfectDays = useMemo(() => stats.filter((d) => d.pct === 100 && d.total > 0).length, [stats]);
 
   const PERIOD_OPTIONS: { key: Period; label: string }[] = [
-    { key: 'weekly', label: 'Weekly' },
-    { key: 'monthly', label: 'Monthly' },
-    { key: 'yearly', label: 'Yearly' },
+    { key: 'weekly', label: t.history.weekly },
+    { key: 'monthly', label: t.history.monthly },
+    { key: 'yearly', label: t.history.yearly },
   ];
 
-  const periodLabel = period === 'weekly' ? 'This Week' : period === 'monthly' ? 'This Month' : 'This Year';
+  const periodLabel = period === 'weekly' ? t.history.weekly : period === 'monthly' ? t.history.monthly : t.history.yearly;
   const unitLabel = period === 'yearly' ? 'months' : 'days';
 
   if (isLoading || loadingHistory) {
@@ -280,22 +283,22 @@ export default function HistoryScreen() {
       <View style={styles.summaryRow}>
         <View style={[styles.summaryCard, { backgroundColor: Colors.primary + '12' }]}>
           <Text style={[styles.summaryValue, { color: Colors.primary }]}>{overallPct}%</Text>
-          <Text style={styles.summaryLabel}>Overall</Text>
+          <Text style={styles.summaryLabel}>{t.history.completionRate}</Text>
         </View>
         <View style={[styles.summaryCard, { backgroundColor: Colors.success + '12' }]}>
           <Text style={[styles.summaryValue, { color: Colors.success }]}>{perfectDays}</Text>
-          <Text style={styles.summaryLabel}>Perfect {unitLabel}</Text>
+          <Text style={styles.summaryLabel}>Perfect</Text>
         </View>
         <View style={[styles.summaryCard, { backgroundColor: Colors.accent + '12' }]}>
           <Text style={[styles.summaryValue, { color: Colors.accent }]}>{activeDays}</Text>
-          <Text style={styles.summaryLabel}>Active {unitLabel}</Text>
+          <Text style={styles.summaryLabel}>Active</Text>
         </View>
       </View>
 
       <View style={styles.chartCard}>
         <View style={styles.chartHeader}>
           <Ionicons name="bar-chart" size={18} color={Colors.primary} />
-          <Text style={styles.chartTitle}>Completion Rate — {periodLabel}</Text>
+          <Text style={styles.chartTitle}>{t.history.studyActivity} — {periodLabel}</Text>
         </View>
         <View style={styles.chartWrap}>
           <ScrollView
@@ -313,15 +316,15 @@ export default function HistoryScreen() {
         <View style={styles.legendRow}>
           <View style={styles.legendItem}>
             <View style={[styles.legendDot, { backgroundColor: Colors.success }]} />
-            <Text style={styles.legendText}>100% complete</Text>
+          <Text style={styles.legendText}>100%</Text>
           </View>
           <View style={styles.legendItem}>
             <View style={[styles.legendDot, { backgroundColor: Colors.primary }]} />
-            <Text style={styles.legendText}>Partial</Text>
+          <Text style={styles.legendText}>~</Text>
           </View>
           <View style={styles.legendItem}>
             <View style={[styles.legendDot, { backgroundColor: Colors.border }]} />
-            <Text style={styles.legendText}>No data</Text>
+          <Text style={styles.legendText}>—</Text>
           </View>
         </View>
       </View>
@@ -331,7 +334,7 @@ export default function HistoryScreen() {
         {stats.filter((d) => d.total > 0).length === 0 ? (
           <View style={styles.emptyDetail}>
             <Ionicons name="stats-chart-outline" size={36} color={Colors.textLight} />
-            <Text style={styles.emptyDetailText}>No study history for {periodLabel.toLowerCase()}</Text>
+            <Text style={styles.emptyDetailText}>{t.history.noData}</Text>
           </View>
         ) : (
           stats
@@ -361,6 +364,8 @@ export default function HistoryScreen() {
             ))
         )}
       </View>
+
+      <AdBanner />
 
       <View style={{ height: 30 }} />
     </ScrollView>

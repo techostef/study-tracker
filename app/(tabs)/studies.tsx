@@ -12,14 +12,17 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useApp } from '@/contexts/AppContext';
 import { Colors } from '@/constants/Colors';
+import { useLang } from '@/contexts/LanguageContext';
+import AdBanner from '@/components/AdBanner';
 
 export default function StudiesScreen() {
   const { studies, categories, deleteStudy, isLoading } = useApp();
+  const { t } = useLang();
   const router = useRouter();
 
   const getCategoryName = (categoryId: string) => {
     const cat = categories.find((c) => c.id === categoryId);
-    return cat?.name ?? 'Uncategorized';
+    return cat?.name ?? t.studies.uncategorized;
   };
 
   const getCategoryColor = (categoryId: string) => {
@@ -28,10 +31,10 @@ export default function StudiesScreen() {
   };
 
   const handleDelete = (id: string, title: string) => {
-    Alert.alert('Delete Study', `Are you sure you want to delete "${title}"?`, [
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert(t.studies.deleteStudy, `${t.studies.deleteConfirm} "${title}"?`, [
+      { text: t.studies.cancel, style: 'cancel' },
       {
-        text: 'Delete',
+        text: t.studies.delete,
         style: 'destructive',
         onPress: () => deleteStudy(id),
       },
@@ -52,12 +55,13 @@ export default function StudiesScreen() {
         data={studies}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.list}
+        ListFooterComponent={<AdBanner />}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Ionicons name="book-outline" size={64} color={Colors.textLight} />
-            <Text style={styles.emptyTitle}>No Studies Yet</Text>
+            <Text style={styles.emptyTitle}>{t.studies.noStudiesYet}</Text>
             <Text style={styles.emptySubtitle}>
-              Tap the + button to create your first study
+              {t.studies.tapToCreate}
             </Text>
           </View>
         }
@@ -127,7 +131,7 @@ export default function StudiesScreen() {
 
               <View style={styles.cardFooter}>
                 <Text style={styles.targetLabel}>
-                  Target: {item.target} sessions
+                  {t.studies.target}: {item.target} {t.studies.sessionsLabel}
                 </Text>
                 <Pressable
                   onPress={() => handleDelete(item.id, item.title)}

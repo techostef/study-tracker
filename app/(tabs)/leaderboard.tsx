@@ -4,9 +4,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '@/contexts/AppContext';
 import { Colors } from '@/constants/Colors';
 import { fakeLeaderboard, LeaderboardEntry } from '@/utils/fakeData';
+import { useLang } from '@/contexts/LanguageContext';
+import AdBanner from '@/components/AdBanner';
 
 export default function LeaderboardScreen() {
   const { rewards, profile } = useApp();
+  const { t } = useLang();
 
   const leaderboard = useMemo(() => {
     const userEntry: LeaderboardEntry = {
@@ -57,7 +60,7 @@ export default function LeaderboardScreen() {
           <Text style={[styles.score, isUser && styles.userScore]}>
             {item.studiesCompleted}
           </Text>
-          <Text style={styles.scoreLabel}>done</Text>
+          <Text style={styles.scoreLabel}>{t.leaderboard.done}</Text>
         </View>
       </View>
     );
@@ -67,9 +70,9 @@ export default function LeaderboardScreen() {
     <View style={styles.container}>
       <View style={styles.header}>
         <Ionicons name="trophy" size={28} color={Colors.accent} />
-        <Text style={styles.headerTitle}>Global Ranking</Text>
+        <Text style={styles.headerTitle}>{t.leaderboard.title}</Text>
         <Text style={styles.headerSubtitle}>
-          See how you compare with other learners worldwide
+          {t.leaderboard.subtitle}
         </Text>
       </View>
 
@@ -79,6 +82,7 @@ export default function LeaderboardScreen() {
         renderItem={renderItem}
         contentContainerStyle={styles.list}
         showsVerticalScrollIndicator={false}
+        ListFooterComponent={<AdBanner />}
       />
     </View>
   );

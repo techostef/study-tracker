@@ -8,19 +8,25 @@ import {
   Pressable,
   Alert,
   ActivityIndicator,
+  Modal,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useApp } from '@/contexts/AppContext';
 import { Colors } from '@/constants/Colors';
+import { useLang } from '@/contexts/LanguageContext';
+import { Language } from '@/constants/i18n';
+import AdBanner from '@/components/AdBanner';
 
 export default function ProfileScreen() {
   const { profile, updateProfile, studies, rewards, exportData, importData } = useApp();
+  const { t, language, setLanguage } = useLang();
   const router = useRouter();
   const [name, setName] = useState(profile.name);
   const [editing, setEditing] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [importing, setImporting] = useState(false);
+  const [langModalVisible, setLangModalVisible] = useState(false);
 
   const completedCount = studies.filter((s) => s.completed).length;
   const activeCount = studies.filter((s) => !s.completed).length;
@@ -31,7 +37,7 @@ export default function ProfileScreen() {
     try {
       await exportData();
     } catch (e: any) {
-      Alert.alert('Export Failed', e?.message ?? 'Could not export data.');
+      Alert.alert(t.profile.exportFailed, e?.message ?? t.profile.couldNotExport);
     } finally {
       setExporting(false);
     }
@@ -39,21 +45,21 @@ export default function ProfileScreen() {
 
   const handleImport = async () => {
     Alert.alert(
-      'Import Data',
-      'This will replace ALL your current data with the backup file. Are you sure?',
+      t.profile.importData,
+      t.profile.importWarning,
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t.profile.cancel, style: 'cancel' },
         {
-          text: 'Import',
+          text: t.profile.import,
           style: 'destructive',
           onPress: async () => {
             setImporting(true);
             try {
               await importData();
-              Alert.alert('Success', 'Data imported successfully!');
+              Alert.alert(t.profile.success, t.profile.importSuccess);
             } catch (e: any) {
               if (e?.message !== 'CANCELLED') {
-                Alert.alert('Import Failed', e?.message ?? 'Could not import data.');
+                Alert.alert(t.profile.importFailed, e?.message ?? t.profile.couldNotImport);
               }
             } finally {
               setImporting(false);
@@ -66,12 +72,17 @@ export default function ProfileScreen() {
 
   const handleSave = async () => {
     if (!name.trim()) {
-      Alert.alert('Error', 'Please enter your name');
+      Alert.alert(t.profile.error, t.profile.pleaseEnterName);
       return;
     }
     await updateProfile({ name: name.trim() });
     setEditing(false);
-    Alert.alert('Success', `Profile updated, ${name.trim()}!`);
+    Alert.alert(t.profile.success, `${t.profile.profileUpdated}, ${name.trim()}!`);
+  };
+
+  const handleSelectLanguage = async (lang: Language) => {
+    await setLanguage(lang);
+    setLangModalVisible(false);
   };
 
   return (
@@ -86,7 +97,7 @@ export default function ProfileScreen() {
               style={styles.nameInput}
               value={name}
               onChangeText={setName}
-              placeholder="Enter your name"
+              placeholder={t.profile.enterName}
               autoFocus
             />
             <Pressable style={styles.saveBtn} onPress={handleSave}>
@@ -108,42 +119,54 @@ export default function ProfileScreen() {
             <Ionicons name="pencil" size={16} color={Colors.primary} />
           </Pressable>
         )}
-        <Text style={styles.subtitle}>Adventure Scholar</Text>
+        <Text style={styles.subtitle}>{t.profile.adventureScholar}</Text>
       </View>
 
       <View style={styles.statsGrid}>
         <View style={styles.statCard}>
           <Ionicons name="book" size={24} color={Colors.primary} />
           <Text style={styles.statValue}>{studies.length}</Text>
-          <Text style={styles.statLabel}>Total Studies</Text>
+          <Text style={styles.statLabel}>{t.profile.totalStudies}</Text>
         </View>
         <View style={styles.statCard}>
           <Ionicons name="checkmark-circle" size={24} color={Colors.success} />
           <Text style={styles.statValue}>{completedCount}</Text>
-          <Text style={styles.statLabel}>Completed</Text>
+          <Text style={styles.statLabel}>{t.profile.completed}</Text>
         </View>
         <View style={styles.statCard}>
           <Ionicons name="hourglass" size={24} color={Colors.accent} />
           <Text style={styles.statValue}>{activeCount}</Text>
-          <Text style={styles.statLabel}>In Progress</Text>
+          <Text style={styles.statLabel}>{t.profile.inProgress}</Text>
         </View>
         <View style={styles.statCard}>
           <Ionicons name="flame" size={24} color={Colors.danger} />
           <Text style={styles.statValue}>{totalProgress}</Text>
-          <Text style={styles.statLabel}>Sessions Done</Text>
+          <Text style={styles.statLabel}>{t.profile.sessionsDone}</Text>
         </View>
       </View>
 
       <Pressable
         style={styles.menuItem}
-        onPress={() => router.push('/reminder'  as any)}
+        onPress={() => router.push('/reminder' as any)}
       >
         <Ionicons name="notifications" size={22} color={Colors.primary} />
-        <Text style={styles.menuLabel}>Manage Reminders</Text>
+        <Text style={styles.menuLabel}>{t.profile.manageReminders}</Text>
         <Ionicons name="chevron-forward" size={20} color={Colors.textLight} />
       </Pressable>
 
-      <Text style={styles.sectionTitle}>Data Management</Text>
+      <Pressable
+        style={styles.menuItem}
+        onPress={() => setLangModalVisible(true)}
+      >
+        <Ionicons name="language" size={22} color={Colors.primary} />
+        <Text style={styles.menuLabel}>{t.profile.language}</Text>
+        <Text style={styles.langBadge}>
+          {language === 'en' ? '🇬🇧 English' : '🇮🇩 Indonesia'}
+        </Text>
+        <Ionicons name="chevron-forward" size={20} color={Colors.textLight} />
+      </Pressable>
+
+      <Text style={styles.sectionTitle}>{t.profile.dataManagement}</Text>
 
       <View style={styles.dataRow}>
         <Pressable
@@ -156,7 +179,7 @@ export default function ProfileScreen() {
           ) : (
             <Ionicons name="share-outline" size={20} color={Colors.white} />
           )}
-          <Text style={styles.dataBtnText}>Export Backup</Text>
+          <Text style={styles.dataBtnText}>{t.profile.exportBackup}</Text>
         </Pressable>
 
         <Pressable
@@ -169,21 +192,19 @@ export default function ProfileScreen() {
           ) : (
             <Ionicons name="download-outline" size={20} color={Colors.white} />
           )}
-          <Text style={styles.dataBtnText}>Import Backup</Text>
+          <Text style={styles.dataBtnText}>{t.profile.importBackup}</Text>
         </Pressable>
       </View>
 
       <Text style={styles.sectionTitle}>
-        Rewards ({rewards.length})
+        {t.profile.rewards} ({rewards.length})
       </Text>
 
       {rewards.length === 0 ? (
         <View style={styles.emptyRewards}>
           <Ionicons name="trophy-outline" size={48} color={Colors.textLight} />
-          <Text style={styles.emptyText}>No rewards yet</Text>
-          <Text style={styles.emptySubtext}>
-            Complete studies to earn rewards!
-          </Text>
+          <Text style={styles.emptyText}>{t.profile.noRewardsYet}</Text>
+          <Text style={styles.emptySubtext}>{t.profile.completeToEarn}</Text>
         </View>
       ) : (
         rewards.map((reward) => (
@@ -192,15 +213,54 @@ export default function ProfileScreen() {
             <View style={styles.rewardInfo}>
               <Text style={styles.rewardTitle}>{reward.studyTitle}</Text>
               <Text style={styles.rewardDate}>
-                Completed {new Date(reward.completedAt).toLocaleDateString()}
+                {t.common.completedAt} {new Date(reward.completedAt).toLocaleDateString()}
               </Text>
             </View>
-            <Text style={styles.rewardXP}>+100 XP</Text>
+            <Text style={styles.rewardXP}>{t.common.xp}</Text>
           </View>
         ))
       )}
 
+      <AdBanner />
+
       <View style={{ height: 30 }} />
+
+      <Modal
+        visible={langModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setLangModalVisible(false)}
+      >
+        <Pressable style={styles.modalOverlay} onPress={() => setLangModalVisible(false)}>
+          <View style={styles.langModal}>
+            <Text style={styles.langModalTitle}>{t.profile.selectLanguage}</Text>
+            <Pressable
+              style={[styles.langOption, language === 'en' && styles.langOptionActive]}
+              onPress={() => handleSelectLanguage('en')}
+            >
+              <Text style={styles.langOptionFlag}>🇬🇧</Text>
+              <Text style={[styles.langOptionText, language === 'en' && styles.langOptionTextActive]}>
+                English
+              </Text>
+              {language === 'en' && (
+                <Ionicons name="checkmark-circle" size={20} color={Colors.primary} />
+              )}
+            </Pressable>
+            <Pressable
+              style={[styles.langOption, language === 'id' && styles.langOptionActive]}
+              onPress={() => handleSelectLanguage('id')}
+            >
+              <Text style={styles.langOptionFlag}>🇮🇩</Text>
+              <Text style={[styles.langOptionText, language === 'id' && styles.langOptionTextActive]}>
+                Indonesia
+              </Text>
+              {language === 'id' && (
+                <Ionicons name="checkmark-circle" size={20} color={Colors.primary} />
+              )}
+            </Pressable>
+          </View>
+        </Pressable>
+      </Modal>
     </ScrollView>
   );
 }
@@ -414,5 +474,62 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
     color: Colors.white,
+  },
+  langBadge: {
+    fontSize: 13,
+    color: Colors.textSecondary,
+    fontWeight: '500',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: Colors.overlay,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 32,
+  },
+  langModal: {
+    backgroundColor: Colors.white,
+    borderRadius: 20,
+    padding: 24,
+    width: '100%',
+    gap: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  langModalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: Colors.text,
+    marginBottom: 4,
+    textAlign: 'center',
+  },
+  langOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 16,
+    borderRadius: 14,
+    borderWidth: 2,
+    borderColor: Colors.border,
+    backgroundColor: Colors.background,
+  },
+  langOptionActive: {
+    borderColor: Colors.primary,
+    backgroundColor: '#EEF2FF',
+  },
+  langOptionFlag: {
+    fontSize: 28,
+  },
+  langOptionText: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '600',
+    color: Colors.text,
+  },
+  langOptionTextActive: {
+    color: Colors.primary,
   },
 });

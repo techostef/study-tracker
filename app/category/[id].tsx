@@ -11,9 +11,11 @@ import {
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useApp } from '@/contexts/AppContext';
 import { Colors, CategoryColors } from '@/constants/Colors';
+import { useLang } from '@/contexts/LanguageContext';
 
 export default function EditCategoryScreen() {
   const { categories, updateCategory } = useApp();
+  const { t } = useLang();
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
 
@@ -32,7 +34,7 @@ export default function EditCategoryScreen() {
   const handleSave = async () => {
     if (!category) return;
     if (!name.trim()) {
-      Alert.alert('Error', 'Please enter a category name');
+      Alert.alert(t.categoryForm.error, t.categoryForm.nameRequired);
       return;
     }
 
@@ -55,16 +57,16 @@ export default function EditCategoryScreen() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.label}>Category Name *</Text>
+      <Text style={styles.label}>{t.categoryForm.name} *</Text>
       <TextInput
         style={styles.input}
         value={name}
         onChangeText={setName}
-        placeholder="Category name"
+        placeholder={t.categoryForm.namePlaceholder}
         placeholderTextColor={Colors.textLight}
       />
 
-      <Text style={styles.label}>Color</Text>
+      <Text style={styles.label}>{t.categoryForm.color}</Text>
       <View style={styles.colorGrid}>
         {CategoryColors.map((color) => (
           <Pressable
@@ -87,7 +89,7 @@ export default function EditCategoryScreen() {
       </View>
 
       <Pressable style={styles.saveBtn} onPress={handleSave}>
-        <Text style={styles.saveBtnText}>Save Changes</Text>
+        <Text style={styles.saveBtnText}>{t.categoryForm.update}</Text>
       </Pressable>
     </ScrollView>
   );

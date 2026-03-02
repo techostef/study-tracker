@@ -13,9 +13,12 @@ import { Colors } from '@/constants/Colors';
 import { motivationalQuotes } from '@/utils/fakeData';
 import ProgressRing from '@/components/ProgressRing';
 import RewardModal from '@/components/RewardModal';
+import { useLang } from '@/contexts/LanguageContext';
+import AdBanner from '@/components/AdBanner';
 
 export default function TrackerScreen() {
   const { studies, categories, profile, incrementProgress, isLoading } = useApp();
+  const { t } = useLang();
   const [rewardVisible, setRewardVisible] = useState(false);
   const [rewardStudyTitle, setRewardStudyTitle] = useState('');
 
@@ -85,34 +88,34 @@ export default function TrackerScreen() {
           <View style={styles.statRow}>
             <Ionicons name="book" size={18} color={Colors.primary} />
             <Text style={styles.statText}>
-              {studies.length} Total Studies
+              {studies.length} {t.tracker.totalStudies}
             </Text>
           </View>
           <View style={styles.statRow}>
             <Ionicons name="hourglass" size={18} color={Colors.accent} />
             <Text style={styles.statText}>
-              {activeStudies.length} In Progress
+              {activeStudies.length} {t.tracker.inProgress}
             </Text>
           </View>
           <View style={styles.statRow}>
             <Ionicons name="checkmark-circle" size={18} color={Colors.success} />
             <Text style={styles.statText}>
-              {completedStudies.length} Completed
+              {completedStudies.length} {t.tracker.completed}
             </Text>
           </View>
         </View>
       </View>
 
       <Text style={styles.sectionTitle}>
-        Active Studies ({activeStudies.length})
+        {t.tracker.activeStudies} ({activeStudies.length})
       </Text>
 
       {activeStudies.length === 0 ? (
         <View style={styles.emptyCard}>
           <Ionicons name="book-outline" size={48} color={Colors.textLight} />
-          <Text style={styles.emptyText}>No active studies yet</Text>
+          <Text style={styles.emptyText}>{t.tracker.noActiveStudies}</Text>
           <Text style={styles.emptySubtext}>
-            Go to Studies tab to create one!
+            {t.tracker.goToStudies}
           </Text>
         </View>
       ) : (
@@ -178,7 +181,7 @@ export default function TrackerScreen() {
                   size={28}
                   color={Colors.primary}
                 />
-                <Text style={styles.tapHintText}>Tap to log progress</Text>
+                <Text style={styles.tapHintText}>{t.tracker.tapToLog}</Text>
               </View>
             </Pressable>
           );
@@ -188,7 +191,7 @@ export default function TrackerScreen() {
       {completedStudies.length > 0 && (
         <>
           <Text style={styles.sectionTitle}>
-            Completed ({completedStudies.length})
+            {t.tracker.completed} ({completedStudies.length})
           </Text>
           {completedStudies.map((study) => (
             <View key={study.id} style={[styles.studyCard, styles.completedCard]}>
@@ -197,7 +200,7 @@ export default function TrackerScreen() {
                 <Text style={styles.completedTitle}>{study.title}</Text>
               </View>
               <Text style={styles.completedInfo}>
-                {study.target}/{study.target} completed
+                {study.target}/{study.target} {t.tracker.completed.toLowerCase()}
               </Text>
             </View>
           ))}
@@ -205,6 +208,8 @@ export default function TrackerScreen() {
       )}
 
       <View style={{ height: 30 }} />
+
+      <AdBanner />
 
       <RewardModal
         visible={rewardVisible}

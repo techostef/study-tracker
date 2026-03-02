@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useApp } from '@/contexts/AppContext';
 import { Colors } from '@/constants/Colors';
 import { Reminder } from '@/constants/Types';
+import { useLang } from '@/contexts/LanguageContext';
 
 type SortKey = 'label' | 'time' | 'createdAt';
 
@@ -63,6 +64,7 @@ function TimePickerColumn({
 
 export default function ReminderScreen() {
   const { reminders, addReminder, updateReminder, deleteReminder } = useApp();
+  const { t } = useLang();
   const [showAdd, setShowAdd] = useState(false);
   const [newLabel, setNewLabel] = useState('');
   const [newHour, setNewHour] = useState(8);
@@ -86,7 +88,7 @@ export default function ReminderScreen() {
       hour: newHour,
       minute: newMinute,
       enabled: true,
-      label: newLabel.trim() || 'Study Reminder',
+      label: newLabel.trim() || t.reminders.title,
     });
     setShowAdd(false);
     setNewLabel('');
@@ -102,10 +104,10 @@ export default function ReminderScreen() {
   };
 
   const handleDelete = (id: string) => {
-    Alert.alert('Delete Reminder', 'Remove this reminder?', [
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert(t.reminders.deleteReminder, t.reminders.deleteConfirm, [
+      { text: t.reminders.cancel, style: 'cancel' },
       {
-        text: 'Delete',
+        text: t.reminders.delete,
         style: 'destructive',
         onPress: () => deleteReminder(id),
       },
@@ -121,7 +123,7 @@ export default function ReminderScreen() {
 
   const SORT_OPTIONS: { key: SortKey; label: string; icon: string }[] = [
     { key: 'time', label: 'Time', icon: 'time-outline' },
-    { key: 'label', label: 'Label', icon: 'text-outline' },
+    { key: 'label', label: t.reminders.title, icon: 'text-outline' },
     { key: 'createdAt', label: 'Created', icon: 'calendar-outline' },
   ];
 
@@ -171,9 +173,9 @@ export default function ReminderScreen() {
               size={48}
               color={Colors.textLight}
             />
-            <Text style={styles.emptyText}>No reminders set</Text>
+            <Text style={styles.emptyText}>{t.reminders.noReminders}</Text>
             <Text style={styles.emptySubtext}>
-              Add a reminder to stay on track
+              {t.reminders.addReminder}
             </Text>
           </View>
         }
@@ -214,7 +216,7 @@ export default function ReminderScreen() {
       >
         <Pressable style={styles.modalOverlay} onPress={() => setShowAdd(false)}>
           <Pressable style={styles.modalCard} onPress={(e) => e.stopPropagation()}>
-            <Text style={styles.addTitle}>New Reminder</Text>
+            <Text style={styles.addTitle}>{t.reminders.addNew}</Text>
 
             <TextInput
               style={styles.input}
@@ -254,10 +256,10 @@ export default function ReminderScreen() {
                 style={styles.cancelBtn}
                 onPress={() => setShowAdd(false)}
               >
-                <Text style={styles.cancelBtnText}>Cancel</Text>
+                <Text style={styles.cancelBtnText}>{t.reminders.cancel}</Text>
               </Pressable>
               <Pressable style={styles.confirmBtn} onPress={handleAdd}>
-                <Text style={styles.confirmBtnText}>Add Reminder</Text>
+                <Text style={styles.confirmBtnText}>{t.reminders.addNew}</Text>
               </Pressable>
             </View>
           </Pressable>
